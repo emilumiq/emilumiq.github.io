@@ -1,0 +1,83 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Watchlist · Emily">
+  <main class="mx-auto w-full max-w-3xl px-6 py-10 sm:py-14">
+    <a href="/" class="inline-flex text-base text-accent hover:text-accent-strong">← back</a>
+
+    <div class="mt-8 flex items-end justify-between border-b border-line pb-4">
+      <div>
+        <p class="text-sm uppercase tracking-wide text-muted">library</p>
+        <h1 class="mt-1 text-4xl font-bold text-foreground">watchlist</h1>
+      </div>
+      <span id="watchlist-status" class="text-sm text-muted" aria-live="polite">loading…</span>
+    </div>
+
+    <nav class="mt-6 flex gap-1" aria-label="Status filter">
+      <button data-status="" class="status-tab status-tab-active rounded-md px-4 py-2 text-sm font-medium">All</button>
+      <button data-status="1" class="status-tab status-tab-inactive rounded-md px-4 py-2 text-sm font-medium">In progress</button>
+      <button data-status="2" class="status-tab status-tab-inactive rounded-md px-4 py-2 text-sm font-medium">Completed</button>
+      <button data-status="3" class="status-tab status-tab-inactive rounded-md px-4 py-2 text-sm font-medium">Planning</button>
+    </nav>
+
+    <div id="watchlist-grid" class="mt-6 grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-4"></div>
+    <div id="watchlist-sentinel" class="h-16"></div>
+  </main>
+</Base>
+
+<script>
+  import { createCard, showFallback, type Entry } from '../lib/cards';
+  import { fetchWatchlist } from '../lib/yamtrack';
+
+  const grid = document.getElementById('watchlist-grid') as HTMLElement | null;
+  const sentinel = document.getElementById('watchlist-sentinel') as HTMLElement | null;
+  const statusEl = document.getElementById('watchlist-status') as HTMLElement | null;
+
+  if (!grid || !sentinel || !statusEl) throw new Error('Missing DOM elements');
+
+  let currentStatus = '';
+  let loading = false;
+
+  // Status tab styles
+  function setTabStyles(active: string) {
+    document.querySelectorAll<HTMLButtonElement>('.status-tab').forEach((btn) => {
+      const isActive = (btn.dataset.status ?? '') === active;
+      btn.className = `status-tab rounded-md px-4 py-2 text-sm font-medium ${isActive ? 'status-tab-active' : 'status-tab-inactive'}`;
+    });
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('.status-tab').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const next = btn.dataset.status ?? '';
+      if (next === currentStatus) return;
+      currentStatus = next;
+      grid.innerHTML = '';
+      setTabStyles(currentStatus);
+      statusEl.textContent = 'loading…';
+      load();
+    });
+  });
+
+  function render(item: Entry) {
+    grid.append(createCard(item, 'grid'));
+  }
+
+  async function load() {
+    if (loading) return;
+    loading = true;
+    try {
+      statusEl.textContent = 'loading…';
+      const items = await fetchWatchlist(currentStatus);
+      items.forEach(render);
+      statusEl.textContent = grid.children.length ? '' : 'nothing here';
+    } catch (err) {
+      statusEl.textContent = err instanceof Error ? err.message : 'could not load';
+    } finally {
+      loading = false;
+    }
+  }
+
+  load();
+  new IntersectionObserver(() => load(), { rootMargin: '500px' }).observe(sentinel);
+</script>

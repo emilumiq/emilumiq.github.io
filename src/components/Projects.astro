@@ -1,0 +1,40 @@
+---
+import Icon from './Icon.astro';
+import { projects } from '../data/profile';
+const tagIcons: Record<string, string> = { 'next.js': '/nextjs.svg', typescript: '/typescript.svg', bun: '/bun.svg', elysia: '/elysia.svg', auth: '/typescript.svg', go: '/go.svg', vue: '/vue.svg' };
+---
+
+<section id="projects" class="scroll-mt-20">
+	<h2 class="flex items-center gap-3 text-2xl font-semibold text-foreground">
+		<span class="text-accent">•</span> projects
+	</h2>
+	<div class="mt-6 grid gap-4 md:grid-cols-3">
+		{
+			projects.map((p) => (
+			<article class="group border border-line bg-surface p-5 transition hover:border-accent">
+					<div class="flex items-start justify-between gap-3">
+						<div>
+							<h3 class="font-semibold text-accent-soft group-hover:text-accent">
+								{p.name}
+							</h3>
+						</div>
+						<div class="flex gap-2 text-muted">
+			<a href={p.siteUrl} target="_blank" rel="noopener noreferrer" class="project-action" aria-label={`Open ${p.name}`} title="Open site"><Icon name="arrow-up-right" class="h-5 w-5" /></a>
+			<a href={p.sourceUrl} target="_blank" rel="noopener noreferrer" class="project-action" aria-label={`Open ${p.name} source code`} title="Source code"><Icon name="code" class="h-5 w-5" /></a>
+						</div>
+					</div>
+			<p class="mt-3 text-base leading-relaxed text-muted">
+						{p.description}
+					</p>
+					<div class="mt-4 flex flex-wrap gap-2 border-t border-line pt-3">
+						{p.tags.map((t) => (
+							<span class="text-muted" title={t} aria-label={t}>
+								<img src={tagIcons[t] ?? '/typescript.svg'} alt={t} loading="lazy" class="tech-icon inline-block h-6 w-6 object-contain align-middle" />
+							</span>
+						))}
+					</div>
+			</article>
+			))
+		}
+	</div>
+</section>

@@ -1,0 +1,55 @@
+---
+import { watchlist } from '../data/profile';
+---
+
+<section id="watching" class="scroll-mt-20">
+  <div class="flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <h2 class="flex items-center gap-3 text-2xl font-semibold text-foreground">
+        <span class="inline-block h-2 w-2 animate-pulse-soft rounded-full bg-accent"></span>
+        {watchlist.title}
+      </h2>
+      <p class="mt-1 text-base text-muted">{watchlist.note}</p>
+    </div>
+    <a href="/watching" class="watch-all-button btn-accent">watch all <span aria-hidden="true">→</span></a>
+  </div>
+
+  <div id="watchlist-grid" class="watchlist-scroller mt-6 flex gap-4 overflow-x-auto pb-2">
+    {Array.from({ length: watchlist.limit }).map(() => (
+      <div class="animate-pulse-soft shrink-0 w-40 sm:w-48">
+        <div class="aspect-[2/3] bg-surface" />
+        <div class="mt-2 h-3.5 w-3/4 bg-surface" />
+        <div class="mt-1.5 h-3 w-1/3 bg-surface" />
+      </div>
+    ))}
+  </div>
+</section>
+
+<script>
+  import { createCard, showFallback } from '../lib/cards';
+  import { fetchWatchlist } from '../lib/yamtrack';
+  import { watchlist } from '../data/profile';
+
+  const grid = document.getElementById('watchlist-grid')!;
+
+  fetchWatchlist()
+    .then((items) => {
+      if (items.length === 0) {
+        showFallback(grid, 'nothing here right now');
+        return;
+      }
+      grid.className = 'watchlist-scroller mt-6 flex gap-4 overflow-x-auto pb-2';
+      grid.replaceChildren(
+        ...items.slice(0, watchlist.limit).map((e) => createCard(e, 'scroller')),
+      );
+    })
+    .catch(() => showFallback(grid, 'could not load the watchlist'));
+
+  window.addEventListener('wheel', (event) => {
+    const scroller = (event.target as HTMLElement).closest?.('#watchlist-grid') as HTMLElement | null;
+    if (scroller && event.shiftKey) {
+      event.preventDefault();
+      scroller.scrollLeft += event.deltaY;
+    }
+  }, { passive: false });
+</script>

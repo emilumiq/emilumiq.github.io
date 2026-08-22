@@ -1,0 +1,44 @@
+---
+import Flags from './Flags.astro';
+import { profile } from '../data/profile';
+---
+
+<section id="about" class="scroll-mt-20 animate-fade-up">
+	<h1 class="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+		{profile.name} <span class="align-middle text-2xl sm:text-3xl">{profile.emoji}</span>
+	</h1>
+
+	<div class="mt-6 max-w-xl space-y-3 leading-relaxed text-muted">
+		<p class="flex flex-wrap items-center gap-2">
+			<span>{profile.intro[0]}</span>
+			<span
+				class="inline-flex items-center gap-2 rounded-full border border-accent/25 bg-accent/5 px-2.5 py-0.5 text-sm text-accent-soft"
+			>
+				she/her <Flags />
+			</span>
+		</p>
+		<p>{profile.intro[1]}</p>
+		<p>
+			{profile.intro[2]}
+			<span class="spoiler text-accent-soft/90" tabindex="0" role="button" title="click to reveal"
+				>{profile.spoiler}</span
+			>
+		</p>
+		<p>{profile.intro[3]}</p>
+	</div>
+
+</section>
+
+<script>
+	// click-to-reveal spoilers
+	for (const el of document.querySelectorAll<HTMLSpanElement>('.spoiler')) {
+		const toggle = () => el.classList.toggle('revealed');
+		el.addEventListener('click', toggle);
+		el.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				e.preventDefault();
+				toggle();
+			}
+		});
+	}
+</script>

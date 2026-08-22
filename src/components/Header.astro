@@ -1,0 +1,36 @@
+---
+import Icon from './Icon.astro';
+import { profile } from '../data/profile';
+
+const nav = [
+	{ href: '#about', label: 'about' },
+	{ href: '#projects', label: 'projects' },
+	{ href: '#watching', label: 'watching' },
+];
+---
+
+<header class="border-b border-line">
+	<div class="mx-auto flex h-14 max-w-2xl items-center justify-between px-6">
+		<div class="flex items-center gap-3">
+			<a
+				href="#top"
+				class="text-lg font-semibold tracking-tight text-white"
+			>
+				{profile.name} <span class="align-middle text-base">{profile.emoji}</span>
+			</a>
+			<span class="hidden items-center gap-1.5 text-xs text-muted sm:flex">
+				<Icon name="moon" class="h-3.5 w-3.5" />
+				{profile.status}
+			</span>
+		</div>
+		<nav class="flex items-center gap-5 text-sm">
+			{
+				nav.map((l) => (
+					<a href={l.href} class="text-accent/80 hover:text-accent">
+						{l.label}
+					</a>
+				))
+			}
+		</nav>
+	</div>
+</header>

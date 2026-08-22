@@ -1,0 +1,30 @@
+---
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import Projects from '../components/Projects.astro';
+import Watchlist from '../components/Watchlist.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Base>
+	<div id="top" class="flex min-h-screen flex-col">
+			<div class="mx-auto flex w-full max-w-3xl justify-end px-6 pt-8">
+			<button id="theme-toggle" class="icon-button" type="button" aria-label="Toggle theme" title="Toggle theme">◐</button>
+		</div>
+		<main class="mx-auto w-full max-w-3xl flex-1 space-y-16 px-6 py-14">
+			<Hero />
+			<Projects />
+			<Watchlist />
+		</main>
+		<Footer />
+	</div>
+</Base>
+
+<script>
+	const button = document.getElementById('theme-toggle');
+	button?.addEventListener('click', () => {
+		const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+		document.documentElement.dataset.theme = next;
+		localStorage.setItem('theme', next);
+	});
+</script>

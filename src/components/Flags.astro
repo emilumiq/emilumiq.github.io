@@ -1,0 +1,12 @@
+---
+// Tiny pride flag icons: trans + lesbian (five-stripe sunset).
+interface Props {
+	class?: string;
+}
+const { class: className = '' } = Astro.props;
+---
+
+<span class={`inline-flex items-center gap-1.5 align-middle ${className}`}>
+	<img class="h-3 w-[18px] object-cover" src="/transgender-flag.svg" alt="trans flag" loading="eager" />
+	<img class="h-3 w-[18px] object-cover" src="/lesbian-flag.svg" alt="lesbian flag" loading="eager" />
+</span>

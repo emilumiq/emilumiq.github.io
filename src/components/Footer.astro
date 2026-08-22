@@ -1,0 +1,14 @@
+---
+const year = new Date().getFullYear();
+import Icon from './Icon.astro';
+import { links } from '../data/profile';
+---
+
+<footer class="mt-20 border-t border-line">
+	<div class="mx-auto max-w-3xl px-6 py-8 text-sm text-muted">
+		<nav class="mb-5 grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4" aria-label="social links">
+{links.map((l) => <a href={l.url} target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-accent hover:text-accent-strong">{['forgejo','rutracker','nnmclub'].includes(l.icon) ? <img src={`/${l.icon}.svg`} alt="" loading="lazy" class="logo-icon h-4 w-4 object-contain" /> : <Icon name={l.icon} class="h-4 w-4" />}{l.label}</a>)}
+		</nav>
+		{year} Emily Arnelle · built with <a class="text-accent hover:text-accent-strong" href="https://astro.build" target="_blank" rel="noopener noreferrer">Astro</a>
+	</div>
+</footer>

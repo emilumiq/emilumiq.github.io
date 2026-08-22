@@ -1,36 +1,24 @@
-# Emily's info page 🌸
+# Hi, I'm Emily 🌺🐚
 
-A little personal site built with [Astro](https://astro.build) and [Tailwind CSS](https://tailwindcss.com).
+she/her <img src="public/transgender-flag.svg" alt="trans flag" height="14"> <img src="public/lesbian-flag.svg" alt="lesbian flag" height="14">
 
-**Live at:** [emilumiq.github.io)](https://emilumiq.github.io)
+I occasionally do releases on various torrent trackers (mostly RuTracker).
+I also maintain a few projects of my own — vibecoded 🥀
 
-## Getting started
+In my free time I watch anime, tv shows, cartoons, movies and more.
 
-```sh
-git clone https://github.com/emilumiq/info-page.git
-cd info-page
-cp .env.example .env
-npm install
-npm run dev
-```
+## Projects
 
-Open `http://localhost:4321` and you're good to go.
+**[NeoWatch](https://w.neome.uk)** — movie & tv show catalog: descriptions, ratings, actors, trailers, genres and release dates, backed by a Bun/ElysiaJS API. · [source](https://git.disroot.org/Neo/neomovies-web)
 
-## Environment
+**[NeoID](https://id.neome.uk)** — unified authentication service for my projects. · [source](https://git.disroot.org/Neo/neo-id)
 
-| Variable | What it does |
-|---|---|
-| `PUBLIC_YAMTRACK_URL` | Your Yamtrack instance URL |
-| `PUBLIC_YAMTRACK_TOKEN` | API token from Yamtrack (Settings → Integrations) |
+**[Mailly](https://mail.neome.uk)** — a mail client for Gmail. · [source](https://git.disroot.org/emilumiq/mailly)
 
-## Deploy
+## Links
 
-The site is fully static — pushes to `main` deploy to [GitHub Pages](https://pages.github.com) automatically via GitHub Actions.
+[Telegram blog](https://t.me/+1gd8fQTSZYAxYjhi) · [DM me](https://t.me/emilumiq) · [GitHub](https://github.com/emilumiq) · [Disroot](https://git.disroot.org/emilumiq) · [RuTracker](https://rutracker.org/forum/profile.php?mode=viewprofile&u=51945983) · [NNM Club](https://nnmclub.to/forum/profile.php?mode=viewprofile&u=14390161) · [Neo (open source)](https://t.me/neomovies_news)
 
-```sh
-npm run build   # outputs to dist/
-```
+---
 
-## License
-
-[MIT](LICENSE)
+*Built with [Astro](https://astro.build) · [Tailwind CSS](https://tailwindcss.com)*

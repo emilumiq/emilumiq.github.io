@@ -93,17 +93,20 @@ a {
 
 /* scroll arrow buttons — simple inline style */
 .scroll-arrow-btn {
-  font-size: 1.5rem;
+  font-size: 2.5rem;
   font-weight: 300;
   line-height: 1;
   background: none;
   border: none;
-  padding: 0 .25rem;
+  padding: 0 .5rem;
   cursor: pointer;
   transition: opacity .15s;
   flex-shrink: 0;
+  min-width: 2.5rem;
+  text-align: center;
 }
 .scroll-arrow-btn:hover { opacity: .6; }
+.scroll-arrow-btn.is-hidden { visibility: hidden; pointer-events: none; }
 
 /* click-to-reveal spoiler */
 .spoiler { color: var(--color-accent-soft); filter: blur(5px); cursor: pointer; user-select: none; transition: filter .2s ease; }

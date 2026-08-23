@@ -15,7 +15,7 @@ import { watchlist } from '../data/profile';
   </div>
 
   <div class="mt-6 flex items-center gap-3">
-    <button id="scroll-left" class="scroll-arrow-btn hidden text-accent" aria-label="Scroll left">‹</button>
+    <button id="scroll-left" class="scroll-arrow-btn is-hidden text-accent" aria-label="Scroll left">‹</button>
     <div id="watchlist-grid" class="watchlist-scroller flex-1 flex gap-4 overflow-x-auto pb-2">
       {Array.from({ length: watchlist.limit }).map(() => (
         <div class="animate-pulse-soft shrink-0 w-40 sm:w-48">
@@ -25,7 +25,7 @@ import { watchlist } from '../data/profile';
         </div>
       ))}
     </div>
-    <button id="scroll-right" class="scroll-arrow-btn hidden text-accent" aria-label="Scroll right">›</button>
+    <button id="scroll-right" class="scroll-arrow-btn is-hidden text-accent" aria-label="Scroll right">›</button>
   </div>
 </section>
 
@@ -41,8 +41,8 @@ import { watchlist } from '../data/profile';
 
   function updateArrows() {
     const maxScroll = grid.scrollWidth - grid.clientWidth;
-    leftBtn.classList.toggle('hidden', grid.scrollLeft <= 0);
-    rightBtn.classList.toggle('hidden', grid.scrollLeft >= maxScroll - 2);
+    leftBtn.classList.toggle('is-hidden', grid.scrollLeft <= 0);
+    rightBtn.classList.toggle('is-hidden', grid.scrollLeft >= maxScroll - 2);
   }
 
   leftBtn.addEventListener('click', () => {

@@ -27,7 +27,7 @@ import Base from '../layouts/Base.astro';
 </Base>
 
 <script>
-  import { createCard, showFallback, type Entry } from '../lib/cards';
+  import { createCard, showFallback } from '../lib/cards';
   import { fetchWatchlist } from '../lib/yamtrack';
 
   const grid = document.getElementById('watchlist-grid') as HTMLElement | null;
@@ -36,14 +36,19 @@ import Base from '../layouts/Base.astro';
 
   if (!grid || !sentinel || !statusEl) throw new Error('Missing DOM elements');
 
+  const PAGE_SIZE = 20;
+
   let currentStatus = '';
   let loading = false;
+  let offset = 0;
+  let hasMore = true;
 
-  // Status tab styles
+  /* --- status tabs --- */
   function setTabStyles(active: string) {
     document.querySelectorAll<HTMLButtonElement>('.status-tab').forEach((btn) => {
       const isActive = (btn.dataset.status ?? '') === active;
-      btn.className = `status-tab rounded-md px-4 py-2 text-sm font-medium ${isActive ? 'status-tab-active' : 'status-tab-inactive'}`;
+      btn.className =
+        `status-tab rounded-md px-4 py-2 text-sm font-medium ${isActive ? 'status-tab-active' : 'status-tab-inactive'}`;
     });
   }
 
@@ -52,6 +57,8 @@ import Base from '../layouts/Base.astro';
       const next = btn.dataset.status ?? '';
       if (next === currentStatus) return;
       currentStatus = next;
+      offset = 0;
+      hasMore = true;
       grid.innerHTML = '';
       setTabStyles(currentStatus);
       statusEl.textContent = 'loading…';
@@ -59,17 +66,17 @@ import Base from '../layouts/Base.astro';
     });
   });
 
-  function render(item: Entry) {
-    grid.append(createCard(item, 'grid'));
-  }
-
+  /* --- load next page --- */
   async function load() {
-    if (loading) return;
+    if (loading || !hasMore) return;
     loading = true;
+
     try {
       statusEl.textContent = 'loading…';
-      const items = await fetchWatchlist(currentStatus);
-      items.forEach(render);
+      const { items, hasMore: more } = await fetchWatchlist(currentStatus, PAGE_SIZE, offset);
+      items.forEach((item) => grid.append(createCard(item, 'grid')));
+      offset += items.length;
+      hasMore = more;
       statusEl.textContent = grid.children.length ? '' : 'nothing here';
     } catch (err) {
       statusEl.textContent = err instanceof Error ? err.message : 'could not load';
@@ -78,6 +85,18 @@ import Base from '../layouts/Base.astro';
     }
   }
 
+  /* --- initial load + infinite scroll --- */
+  const observer = new IntersectionObserver(
+    () => {
+      if (!hasMore) {
+        observer.disconnect();
+        return;
+      }
+      load();
+    },
+    { rootMargin: '400px' },
+  );
+
   load();
-  new IntersectionObserver(() => load(), { rootMargin: '500px' }).observe(sentinel);
+  observer.observe(sentinel);
 </script>

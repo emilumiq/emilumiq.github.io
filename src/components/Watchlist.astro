@@ -64,8 +64,8 @@ import { watchlist } from '../data/profile';
     }
   }, { passive: false });
 
-  fetchWatchlist()
-    .then((items) => {
+  fetchWatchlist('', watchlist.limit)
+    .then(({ items }) => {
       if (items.length === 0) {
         showFallback(grid, 'nothing here right now');
         return;

@@ -22,7 +22,6 @@ import Base from '../layouts/Base.astro';
     </nav>
 
     <div id="watchlist-grid" class="mt-6 grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-4"></div>
-    <div id="watchlist-sentinel" class="h-16"></div>
   </main>
 </Base>
 
@@ -31,19 +30,13 @@ import Base from '../layouts/Base.astro';
   import { fetchWatchlist } from '../lib/yamtrack';
 
   const grid = document.getElementById('watchlist-grid') as HTMLElement | null;
-  const sentinel = document.getElementById('watchlist-sentinel') as HTMLElement | null;
   const statusEl = document.getElementById('watchlist-status') as HTMLElement | null;
 
-  if (!grid || !sentinel || !statusEl) throw new Error('Missing DOM elements');
-
-  const PAGE_SIZE = 20;
+  if (!grid || !statusEl) throw new Error('Missing DOM elements');
 
   let currentStatus = '';
   let loading = false;
-  let offset = 0;
-  let hasMore = true;
 
-  /* --- status tabs --- */
   function setTabStyles(active: string) {
     document.querySelectorAll<HTMLButtonElement>('.status-tab').forEach((btn) => {
       const isActive = (btn.dataset.status ?? '') === active;
@@ -57,26 +50,24 @@ import Base from '../layouts/Base.astro';
       const next = btn.dataset.status ?? '';
       if (next === currentStatus) return;
       currentStatus = next;
-      offset = 0;
-      hasMore = true;
       grid.innerHTML = '';
       setTabStyles(currentStatus);
-      statusEl.textContent = 'loading…';
       load();
     });
   });
 
-  /* --- load next page --- */
   async function load() {
-    if (loading || !hasMore) return;
+    if (loading) return;
     loading = true;
 
     try {
       statusEl.textContent = 'loading…';
-      const { items, hasMore: more } = await fetchWatchlist(currentStatus, PAGE_SIZE, offset);
-      items.forEach((item) => grid.append(createCard(item, 'grid')));
-      offset += items.length;
-      hasMore = more;
+      const items = await fetchWatchlist(currentStatus);
+      if (items.length === 0) {
+        showFallback(grid, 'nothing here');
+      } else {
+        items.forEach((item) => grid.append(createCard(item, 'grid')));
+      }
       statusEl.textContent = grid.children.length ? '' : 'nothing here';
     } catch (err) {
       statusEl.textContent = err instanceof Error ? err.message : 'could not load';
@@ -85,18 +76,5 @@ import Base from '../layouts/Base.astro';
     }
   }
 
-  /* --- initial load + infinite scroll --- */
-  const observer = new IntersectionObserver(
-    () => {
-      if (!hasMore) {
-        observer.disconnect();
-        return;
-      }
-      load();
-    },
-    { rootMargin: '400px' },
-  );
-
   load();
-  observer.observe(sentinel);
 </script>

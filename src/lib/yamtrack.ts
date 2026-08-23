@@ -34,7 +34,6 @@ type YamtrackRawResponse = {
   item?: YamtrackRawItem;
 };
 
-// External URL builders per source
 function externalUrl(
   source: string,
   mediaType: string,
@@ -86,8 +85,6 @@ function normalizeImage(image: string | null | undefined): string | null {
 async function fetchMediaType(
   mediaType: string,
   status: string,
-  limit = 50,
-  offset = 0,
 ): Promise<YamtrackRawResponse[]> {
   const token = getToken();
   if (!token) return [];
@@ -95,9 +92,8 @@ async function fetchMediaType(
   const origin = getOrigin();
   const url = new URL('/api/media/', origin);
   url.searchParams.set('media_type', mediaType);
-  url.searchParams.set('status', status);
-  url.searchParams.set('limit', String(limit));
-  url.searchParams.set('offset', String(offset));
+  url.searchParams.set('limit', '200');
+  if (status) url.searchParams.set('status', status);
 
   for (const scheme of ['Token', 'Bearer'] as const) {
     const res = await fetch(url.toString(), {
@@ -118,18 +114,16 @@ async function fetchMediaType(
  */
 export async function fetchWatchlist(
   status: string = '',
-  limit = 50,
-  offset = 0,
-): Promise<{ items: YamtrackEntry[]; hasMore: boolean }> {
+): Promise<YamtrackEntry[]> {
   const types = ['tv', 'movie', 'anime'];
   const results = await Promise.all(
-    types.map((t) => fetchMediaType(t, status, limit, offset)),
+    types.map((t) => fetchMediaType(t, status)),
   );
 
   const seen = new Set<string>();
   const origin = getOrigin();
 
-  const items = results
+  return results
     .flat()
     .filter((raw) => {
       const id = raw.item?.media_id ?? '';
@@ -158,14 +152,5 @@ export async function fetchWatchlist(
         url: extUrl ?? origin,
       };
     })
-    .filter((e): e is YamtrackEntry => e !== null)
-    .sort(
-      (a, b) =>
-        Date.parse(b.url ? '' : '') - Date.parse(a.url ? '' : ''),
-    );
-
-  return {
-    items,
-    hasMore: items.length >= limit,
-  };
+    .filter((e): e is YamtrackEntry => e !== null);
 }

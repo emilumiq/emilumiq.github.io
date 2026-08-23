@@ -91,6 +91,35 @@ a {
 .watchlist-scroller { scroll-behavior: auto; scrollbar-width: none; }
 .watchlist-scroller::-webkit-scrollbar { display: none; }
 
+/* scroll arrow buttons */
+.scroll-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  font-weight: 300;
+  line-height: 1;
+  border: 1px solid var(--color-line);
+  background: color-mix(in srgb, var(--color-surface) 85%, transparent);
+  color: var(--color-foreground);
+  backdrop-filter: blur(8px);
+  transition: background .15s, border-color .15s;
+  cursor: pointer;
+}
+.scroll-arrow:hover {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
+}
+.scroll-arrow-left { left: -0.25rem; }
+.scroll-arrow-right { right: -0.25rem; }
+
 /* click-to-reveal spoiler */
 .spoiler { color: var(--color-accent-soft); filter: blur(5px); cursor: pointer; user-select: none; transition: filter .2s ease; }
 .spoiler.revealed { filter: none; user-select: text; }

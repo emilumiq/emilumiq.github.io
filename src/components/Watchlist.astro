@@ -14,14 +14,18 @@ import { watchlist } from '../data/profile';
     <a href="/watching" class="watch-all-button btn-accent">watch all <span aria-hidden="true">→</span></a>
   </div>
 
-  <div id="watchlist-grid" class="watchlist-scroller mt-6 flex gap-4 overflow-x-auto pb-2">
-    {Array.from({ length: watchlist.limit }).map(() => (
-      <div class="animate-pulse-soft shrink-0 w-40 sm:w-48">
-        <div class="aspect-[2/3] bg-surface" />
-        <div class="mt-2 h-3.5 w-3/4 bg-surface" />
-        <div class="mt-1.5 h-3 w-1/3 bg-surface" />
-      </div>
-    ))}
+  <div class="watchlist-wrapper relative mt-6">
+    <button id="scroll-left" class="scroll-arrow scroll-arrow-left hidden" aria-label="Scroll left">‹</button>
+    <div id="watchlist-grid" class="watchlist-scroller flex gap-4 overflow-x-auto pb-2">
+      {Array.from({ length: watchlist.limit }).map(() => (
+        <div class="animate-pulse-soft shrink-0 w-40 sm:w-48">
+          <div class="aspect-[2/3] bg-surface" />
+          <div class="mt-2 h-3.5 w-3/4 bg-surface" />
+          <div class="mt-1.5 h-3 w-1/3 bg-surface" />
+        </div>
+      ))}
+    </div>
+    <button id="scroll-right" class="scroll-arrow scroll-arrow-right hidden" aria-label="Scroll right">›</button>
   </div>
 </section>
 
@@ -31,6 +35,35 @@ import { watchlist } from '../data/profile';
   import { watchlist } from '../data/profile';
 
   const grid = document.getElementById('watchlist-grid')!;
+  const leftBtn = document.getElementById('scroll-left')!;
+  const rightBtn = document.getElementById('scroll-right')!;
+  const SCROLL_AMOUNT = 220; // ~one card width
+
+  function updateArrows() {
+    const maxScroll = grid.scrollWidth - grid.clientWidth;
+    leftBtn.classList.toggle('hidden', grid.scrollLeft <= 0);
+    rightBtn.classList.toggle('hidden', grid.scrollLeft >= maxScroll - 2);
+  }
+
+  leftBtn.addEventListener('click', () => {
+    grid.scrollBy({ left: -SCROLL_AMOUNT, behavior: 'smooth' });
+  });
+
+  rightBtn.addEventListener('click', () => {
+    grid.scrollBy({ left: SCROLL_AMOUNT, behavior: 'smooth' });
+  });
+
+  grid.addEventListener('scroll', updateArrows);
+
+  // Also update arrows on shift+wheel scroll
+  window.addEventListener('wheel', (event) => {
+    const scroller = (event.target as HTMLElement).closest?.('#watchlist-grid') as HTMLElement | null;
+    if (scroller && event.shiftKey) {
+      event.preventDefault();
+      scroller.scrollLeft += event.deltaY;
+      setTimeout(updateArrows, 50);
+    }
+  }, { passive: false });
 
   fetchWatchlist()
     .then((items) => {
@@ -38,18 +71,12 @@ import { watchlist } from '../data/profile';
         showFallback(grid, 'nothing here right now');
         return;
       }
-      grid.className = 'watchlist-scroller mt-6 flex gap-4 overflow-x-auto pb-2';
+      grid.className = 'watchlist-scroller flex gap-4 overflow-x-auto pb-2';
       grid.replaceChildren(
         ...items.slice(0, watchlist.limit).map((e) => createCard(e, 'scroller')),
       );
+      // Show arrows after cards load
+      updateArrows();
     })
     .catch(() => showFallback(grid, 'could not load the watchlist'));
-
-  window.addEventListener('wheel', (event) => {
-    const scroller = (event.target as HTMLElement).closest?.('#watchlist-grid') as HTMLElement | null;
-    if (scroller && event.shiftKey) {
-      event.preventDefault();
-      scroller.scrollLeft += event.deltaY;
-    }
-  }, { passive: false });
 </script>

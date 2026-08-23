@@ -1,5 +1,7 @@
 # Hi, I'm Emily 🌺🐚
 
+🌐 [emilumiq.github.io](https://emilumiq.github.io)
+
 she/her <img src="public/transgender-flag.svg" alt="" height="18"> <img src="public/lesbian-flag.svg" alt="" height="18">
 
 I do releases on torrent trackers and maintain a few side projects.

@@ -9,6 +9,8 @@
 export const PAGE_SIZE = 24;
 
 export type YamtrackEntry = {
+  /** Stable dedup key: "{source}:{media_type}:{media_id}" */
+  key: string;
   title: string;
   image: string | null;
   media_type: string;
@@ -16,6 +18,7 @@ export type YamtrackEntry = {
   status: string | null;
   progress: number | null;
   max_progress: number | null;
+  progressed_at: string | null;
   url: string;
 };
 
@@ -89,16 +92,30 @@ function normalizeImage(image: string | null | undefined): string | null {
   return `${origin}${image.startsWith('/') ? '' : '/'}${image}`;
 }
 
+function makeKey(source: string, mediaType: string, mediaId: string | number): string {
+  return `${source}:${mediaType}:${mediaId}`;
+}
+
+/** Parse progressed_at safely, returning null on invalid/missing values. */
+function parseDate(raw: string | null | undefined): Date | null {
+  if (!raw) return null;
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 function mapEntry(raw: YamtrackRawResponse): YamtrackEntry | null {
   const item = raw.item;
   if (!item?.title) return null;
   const mediaType = item.media_type ?? 'tv';
+  const source = item.source ?? '';
+  const mediaId = item.media_id ?? '';
   const origin = getOrigin();
   const extUrl =
     item.media_id && item.source
       ? externalUrl(item.source, mediaType, item.media_id)
       : null;
   return {
+    key: makeKey(source, mediaType, mediaId),
     title: item.title,
     image: normalizeImage(item.image),
     media_type: mediaType,
@@ -106,8 +123,48 @@ function mapEntry(raw: YamtrackRawResponse): YamtrackEntry | null {
     status: raw.status ?? null,
     progress: raw.progress ?? null,
     max_progress: raw.max_progress ?? null,
+    progressed_at: raw.progressed_at ?? null,
     url: extUrl ?? origin,
   };
+}
+
+/**
+ * Shared fetch with auto-detection of Token vs Bearer auth scheme.
+ * Caches the working scheme to avoid double requests on subsequent calls.
+ */
+let authScheme: 'Token' | 'Bearer' | null = null;
+
+async function apiFetch(
+  url: URL,
+): Promise<{ ok: boolean; status: number; data: { count?: number; results?: YamtrackRawResponse[] } | null }> {
+  const token = getToken();
+  if (!token) return { ok: false, status: 0, data: null };
+
+  const schemes: ('Token' | 'Bearer')[] = authScheme
+    ? [authScheme]
+    : ['Token', 'Bearer'];
+
+  for (const scheme of schemes) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10_000);
+    try {
+      const res = await fetch(url.toString(), {
+        headers: { Authorization: `${scheme} ${token}` },
+        signal: controller.signal,
+      });
+      if (res.ok) {
+        authScheme = scheme;
+        const data = (await res.json()) as { count?: number; results?: YamtrackRawResponse[] };
+        return { ok: true, status: res.status, data };
+      }
+      if (res.status !== 401) return { ok: false, status: res.status, data: null };
+    } catch {
+      return { ok: false, status: 0, data: null };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  return { ok: false, status: 401, data: null };
 }
 
 /**
@@ -121,9 +178,6 @@ export async function fetchMediaPage(
   offset: number,
   limit: number,
 ): Promise<WatchlistPage> {
-  const token = getToken();
-  if (!token) return { entries: [], total: 0 };
-
   const origin = getOrigin();
   const url = new URL('/api/media/', origin);
   url.searchParams.set('media_type', mediaType);
@@ -131,22 +185,13 @@ export async function fetchMediaPage(
   url.searchParams.set('offset', String(offset));
   if (status) url.searchParams.set('status', status);
 
-  for (const scheme of ['Token', 'Bearer'] as const) {
-    const res = await fetch(url.toString(), {
-      headers: { Authorization: `${scheme} ${token}` },
-      signal: AbortSignal.timeout(10_000),
-    });
-    if (res.ok) {
-      const data = (await res.json()) as {
-        count?: number;
-        results?: YamtrackRawResponse[];
-      };
-      const entries = (data.results ?? []).map(mapEntry).filter((e): e is YamtrackEntry => e !== null);
-      return { entries, total: data.count ?? entries.length };
-    }
-    if (res.status !== 401) break;
-  }
-  return { entries: [], total: 0 };
+  const { ok, data } = await apiFetch(url);
+  if (!ok || !data) return { entries: [], total: 0 };
+
+  const entries = (data.results ?? [])
+    .map(mapEntry)
+    .filter((e): e is YamtrackEntry => e !== null);
+  return { entries, total: data.count ?? entries.length };
 }
 
 /**
@@ -175,9 +220,8 @@ export function createWatchlistLoader(status = '', pageSize = PAGE_SIZE) {
         );
 
         for (const e of entries) {
-          const key = `${e.url}:${e.title}`;
-          if (seen.has(key)) continue;
-          seen.add(key);
+          if (seen.has(e.key)) continue;
+          seen.add(e.key);
           acc.push(e);
           if (acc.length >= pageSize) break;
         }
@@ -196,13 +240,103 @@ export function createWatchlistLoader(status = '', pageSize = PAGE_SIZE) {
 }
 
 /**
- * Fetch all media (legacy, for small result sets).
+ * Fetch all media across types, deduplicated, sorted by status and date.
+ *
+ * This is the primary data source for the /watching page — data is
+ * fetched once and reused across all status tabs (filtered client-side).
  */
-export async function fetchWatchlist(
-  status: string = '',
-  limit: number = 8,
-): Promise<YamtrackEntry[]> {
-  const loader = createWatchlistLoader(status, limit);
-  const { entries } = await loader.next();
-  return entries;
+export async function fetchAll(): Promise<YamtrackEntry[]> {
+  const token = getToken();
+  if (!token) return [];
+
+  const types = ['tv', 'movie', 'anime'] as const;
+  const pages = await Promise.all(
+    types.map((t) => fetchAllPages(t)),
+  );
+
+  const seen = new Set<string>();
+  const all = pages.flat().filter((e) => {
+    if (seen.has(e.key)) return false;
+    seen.add(e.key);
+    return true;
+  });
+
+  // Explicit global sort:
+  // 1. In progress (newest date first)
+  // 2. Recently completed (last 2 weeks, newest first)
+  // 3. Planning (newest first)
+  // 4. Completed >2 weeks ago (oldest first — watched long ago)
+  // 5. Without dates (by title)
+  const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+
+  function dateGroup(entry: YamtrackEntry): number {
+    const status = entry.status ?? '';
+    const d = parseDate(entry.progressed_at);
+    if (status === 'In progress') return 0;
+    if (d) {
+      if (now - d.getTime() < TWO_WEEKS_MS) return 1;
+      return 3;
+    }
+    if (status === 'Planning') return 2;
+    return 4;
+  }
+
+  all.sort((a, b) => {
+    const ag = dateGroup(a);
+    const bg = dateGroup(b);
+    if (ag !== bg) return ag - bg;
+
+    const ad = parseDate(a.progressed_at);
+    const bd = parseDate(b.progressed_at);
+
+    // Within group 0 (In progress) or 1 (recent): newest first
+    if (ag <= 1 && ad && bd) return bd.getTime() - ad.getTime();
+
+    // Within group 3 (old completed): oldest first
+    if (ag === 3 && ad && bd) return ad.getTime() - bd.getTime();
+
+    // Dated before undated within same group
+    if (ad && !bd) return -1;
+    if (!ad && bd) return 1;
+
+    return a.title.localeCompare(b.title);
+  });
+
+  return all;
+}
+
+async function fetchAllPages(mediaType: string): Promise<YamtrackEntry[]> {
+  const token = getToken();
+  if (!token) return [];
+
+  const origin = getOrigin();
+  const all: YamtrackEntry[] = [];
+  let offset = 0;
+
+  for (let safety = 0; safety < 50; safety++) {
+    const url = new URL('/api/media/', origin);
+    url.searchParams.set('media_type', mediaType);
+    url.searchParams.set('limit', '100');
+    url.searchParams.set('offset', String(offset));
+    url.searchParams.set('t', String(Date.now()));
+
+    const { ok, data } = await apiFetch(url);
+    if (!ok || !data) break;
+
+    const entries = (data.results ?? [])
+      .map(mapEntry)
+      .filter((e): e is YamtrackEntry => e !== null);
+
+    if (entries.length === 0) break;
+
+    all.push(...entries);
+    const prevOffset = offset;
+    offset += entries.length;
+
+    // Safety: if offset didn't advance or already past count, stop
+    if (offset <= prevOffset || offset >= (data.count ?? entries.length)) break;
+  }
+
+  return all;
 }

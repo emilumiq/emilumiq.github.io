@@ -31,7 +31,7 @@ import { watchlist } from '../data/profile';
 
 <script>
   import { createCard, showFallback } from '../lib/cards';
-  import { fetchWatchlist } from '../lib/yamtrack';
+  import { fetchAll } from '../lib/yamtrack';
   import { watchlist } from '../data/profile';
 
   const grid = document.getElementById('watchlist-grid')!;
@@ -64,15 +64,16 @@ import { watchlist } from '../data/profile';
     }
   }, { passive: false });
 
-  fetchWatchlist('', watchlist.limit)
+  fetchAll()
     .then((items) => {
-      if (items.length === 0) {
+      const top = items.slice(0, watchlist.limit);
+      if (top.length === 0) {
         showFallback(grid, 'nothing here right now');
         return;
       }
       grid.className = 'watchlist-scroller flex-1 flex gap-4 overflow-x-auto pb-2';
       grid.replaceChildren(
-        ...items.map((e) => createCard(e, 'scroller')),
+        ...top.map((e) => createCard(e, 'scroller')),
       );
       updateArrows();
     })

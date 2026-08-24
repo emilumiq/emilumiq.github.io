@@ -61,13 +61,27 @@ export function createCard(
   const isComplete =
     entry.status === 'Completed' || entry.media_type === 'movie';
 
-  // Top-left: checkmark (completed) or type badge
+  // Top-left: status badge
   if (isComplete) {
     const check = document.createElement('span');
     check.className =
       'absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-accent text-sm font-bold backdrop-blur-sm';
     check.textContent = '✓';
     poster.append(check);
+  } else if (entry.status === 'In progress') {
+    const badge = document.createElement('span');
+    badge.className =
+      'absolute left-2 top-2 flex items-center gap-1.5 rounded bg-emerald-600/90 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white backdrop-blur-sm';
+    const dot = document.createElement('span');
+    dot.className = 'h-1.5 w-1.5 rounded-full bg-white animate-pulse';
+    badge.append(dot, document.createTextNode('watching'));
+    poster.append(badge);
+  } else if (entry.status === 'Planning') {
+    const badge = document.createElement('span');
+    badge.className =
+      'absolute left-2 top-2 rounded bg-indigo-500/90 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white backdrop-blur-sm';
+    badge.textContent = 'plan';
+    poster.append(badge);
   } else {
     const typeBadge = document.createElement('span');
     typeBadge.className =

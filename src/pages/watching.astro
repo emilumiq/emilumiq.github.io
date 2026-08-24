@@ -22,28 +22,33 @@ import Base from '../layouts/Base.astro';
     </nav>
 
     <div id="watchlist-grid" class="mt-6 grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-4"></div>
-    <div id="sentinel" class="h-1" />
   </main>
 </Base>
 
 <script>
   import { createCard, showFallback } from '../lib/cards';
-  import { createWatchlistLoader } from '../lib/yamtrack';
+  import { fetchAll, type YamtrackEntry } from '../lib/yamtrack';
 
   const grid = document.getElementById('watchlist-grid') as HTMLElement | null;
   const statusEl = document.getElementById('watchlist-status') as HTMLElement | null;
-  const sentinel = document.getElementById('sentinel') as HTMLElement | null;
 
-  if (!grid || !statusEl || !sentinel) throw new Error('Missing DOM elements');
+  if (!grid || !statusEl) throw new Error('Missing DOM elements');
 
+  let allItems: YamtrackEntry[] = [];
   let currentStatus = '';
-  let loading = false;
-  let finished = false;
-  const loaders: Record<string, ReturnType<typeof createWatchlistLoader>> = {};
 
-  function getLoader(status: string) {
-    if (!loaders[status]) loaders[status] = createWatchlistLoader(status);
-    return loaders[status];
+  const STATUS_MAP: Record<string, string> = {
+    '1': 'In progress',
+    '2': 'Completed',
+    '3': 'Planning',
+  };
+
+  function render(status: string) {
+    const filtered = status
+      ? allItems.filter((e) => e.status === STATUS_MAP[status])
+      : allItems;
+    grid.replaceChildren(...filtered.map((e) => createCard(e, 'grid')));
+    statusEl.textContent = filtered.length ? '' : 'nothing here';
   }
 
   function setTabStyles(active: string) {
@@ -54,58 +59,20 @@ import Base from '../layouts/Base.astro';
     });
   }
 
-  function reset() {
-    grid.innerHTML = '';
-    loading = false;
-    finished = false;
-    sentinel.hidden = false;
-  }
-
   document.querySelectorAll<HTMLButtonElement>('.status-tab').forEach((btn) => {
     btn.addEventListener('click', () => {
       const next = btn.dataset.status ?? '';
       if (next === currentStatus) return;
       currentStatus = next;
-      reset();
       setTabStyles(currentStatus);
-      loadMore();
+      render(currentStatus);
     });
   });
 
-  async function loadMore() {
-    if (loading || finished) return;
-    loading = true;
-    statusEl.textContent = 'loading…';
-
-    try {
-      const loader = getLoader(currentStatus);
-      const { entries, done } = await loader.next();
-      finished = done;
-
-      if (entries.length === 0 && grid.children.length === 0) {
-        showFallback(grid, 'nothing here');
-      } else {
-        const frag = document.createDocumentFragment();
-        entries.forEach((item) => frag.append(createCard(item, 'grid')));
-        grid.append(frag);
-      }
-
-      sentinel.hidden = finished;
-      statusEl.textContent = grid.children.length ? '' : 'nothing here';
-    } catch (err) {
-      statusEl.textContent = err instanceof Error ? err.message : 'could not load';
-    } finally {
-      loading = false;
-    }
-  }
-
-  const observer = new IntersectionObserver(
-    (entries) => {
-      if (entries[0].isIntersecting && !loading && !finished) loadMore();
-    },
-    { rootMargin: '400px' },
-  );
-  observer.observe(sentinel);
-
-  loadMore();
+  fetchAll()
+    .then((items) => {
+      allItems = items;
+      render(currentStatus);
+    })
+    .catch(() => showFallback(grid, 'could not load the watchlist'));
 </script>

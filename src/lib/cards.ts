@@ -92,17 +92,18 @@ export function createCard(
       'absolute inset-x-0 bottom-0 h-7 bg-gradient-to-t from-black/80 to-transparent';
 
     const bar = document.createElement('div');
-    bar.className = 'absolute bottom-0 left-0 h-1.5 bg-accent';
-    if (maxProg && maxProg > 0) {
+    const hasMax = maxProg != null && maxProg > 0;
+    bar.className =
+      'absolute bottom-0 left-0 h-1.5 bg-accent' +
+      (hasMax ? '' : ' w-full animate-pulse opacity-50');
+    if (hasMax) {
       bar.style.width = `${Math.min(100, (progress / maxProg) * 100)}%`;
-    } else {
-      bar.style.width = '100%';
     }
 
     const count = document.createElement('span');
     count.className =
       'absolute bottom-1.5 right-2 text-xs font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]';
-    count.textContent = maxProg ? `${progress} / ${maxProg}` : `${progress} ep`;
+    count.textContent = hasMax ? `${progress} / ${maxProg}` : `${progress} ep`;
 
     gradient.append(bar);
     poster.append(gradient);

@@ -11,6 +11,7 @@ export type Entry = {
   status: string | null;
   progress: number | null;
   max_progress: number | null;
+  progressed_at: string | null;
   url: string;
 };
 
@@ -130,10 +131,22 @@ export function createCard(
     'mt-2 truncate text-sm font-medium text-foreground group-hover:text-accent';
   title.textContent = entry.title;
 
-  // Type label
+  // Subtitle: type + date
   const sub = document.createElement('p');
-  sub.className = 'text-xs text-muted';
-  sub.textContent = TYPE_LABELS[entry.media_type] ?? entry.media_type;
+  sub.className = 'flex items-center justify-between text-xs text-muted';
+  const typeSpan = document.createElement('span');
+  typeSpan.textContent = TYPE_LABELS[entry.media_type] ?? entry.media_type;
+  sub.append(typeSpan);
+
+  if (entry.progressed_at) {
+    const d = new Date(entry.progressed_at);
+    if (!Number.isNaN(d.getTime())) {
+      const dateSpan = document.createElement('span');
+      dateSpan.className = 'text-muted/70';
+      dateSpan.textContent = d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+      sub.append(dateSpan);
+    }
+  }
 
   a.append(poster, title, sub);
   return a;

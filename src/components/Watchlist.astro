@@ -64,7 +64,7 @@ import { watchlist } from '../data/profile';
     }
   }, { passive: false });
 
-  fetchWatchlist()
+  fetchWatchlist('', watchlist.limit)
     .then((items) => {
       if (items.length === 0) {
         showFallback(grid, 'nothing here right now');
@@ -72,7 +72,7 @@ import { watchlist } from '../data/profile';
       }
       grid.className = 'watchlist-scroller flex-1 flex gap-4 overflow-x-auto pb-2';
       grid.replaceChildren(
-        ...items.slice(0, watchlist.limit).map((e) => createCard(e, 'scroller')),
+        ...items.map((e) => createCard(e, 'scroller')),
       );
       updateArrows();
     })

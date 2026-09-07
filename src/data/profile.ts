@@ -1,12 +1,8 @@
-// All page content and links are edited in this single file.
-// URLs that depend on the environment (e.g. the Yamtrack instance)
-// come from .env, not from here.
-
 export const profile = {
 	name: 'Emily',
 	emoji: '🌺🐚',
 	intro: [
-		"Hi! I'm Emily Arnelle",
+		"Hi! I'm Emily Aoi",
 		"I occasionally do releases on various torrent trackers (mostly RuTracker).",
 		"I also maintain a few projects of my own —",
 		"In my free time I watch anime, tv shows, cartoons, movies and more.",

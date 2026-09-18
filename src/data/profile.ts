@@ -55,7 +55,7 @@ export const projects: {
 		name: 'NeoWatch',
 		stack: 'Next.js · TypeScript · Bun · ElysiaJS',
 		description:
-			'movie & tv show catalog: descriptions, ratings, actors, trailers, genres and release dates, backed by a Bun/ElysiaJS API.',
+			'movie & tv show catalog · <span class="text-muted/50">old</span> — new (alpha) version <a href="https://neowatch-web.vercel.app" target="_blank" rel="noopener noreferrer" class="text-accent hover:text-accent-strong">here</a>',
 		siteUrl: 'https://w.neome.uk',
 		sourceUrl: 'https://git.disroot.org/Neo/neomovies-web',
 		tags: ['next.js', 'typescript', 'bun', 'elysia'],

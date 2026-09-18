@@ -14,7 +14,7 @@ const tagIcons: Record<string, string> = { 'next.js': '/nextjs.svg', typescript:
 						<a href={p.siteUrl} target="_blank" rel="noopener noreferrer" class="text-lg font-semibold text-foreground hover:text-accent transition-colors">{p.name}</a>
 						<a href={p.sourceUrl} target="_blank" rel="noopener noreferrer" class="text-muted/50 hover:text-accent transition-colors" aria-label={`Open ${p.name} source code`} title="Source code"><Icon name="code" class="h-5 w-5" /></a>
 					</div>
-					<p class="mt-2 text-sm leading-relaxed text-muted">{p.description}</p>
+					<p class="mt-2 text-sm leading-relaxed text-muted" set:html={p.description} />
 					<div class="mt-3 flex items-center gap-1.5">
 						{p.tags.map((t) => (
 							<img src={tagIcons[t] ?? '/typescript.svg'} alt={t} loading="lazy" class="tech-icon h-5 w-5 object-contain" title={t} />

@@ -4,27 +4,70 @@ import Hero from '../components/Hero.astro';
 import Projects from '../components/Projects.astro';
 import Watchlist from '../components/Watchlist.astro';
 import Footer from '../components/Footer.astro';
+import Icon from '../components/Icon.astro';
 ---
 
 <Base>
-	<div id="top" class="flex min-h-screen flex-col">
-			<div class="mx-auto flex w-full max-w-3xl justify-end px-6 pt-8">
-			<button id="theme-toggle" class="icon-button" type="button" aria-label="Toggle theme" title="Toggle theme">◐</button>
-		</div>
-		<main class="mx-auto w-full max-w-3xl flex-1 space-y-16 px-6 py-14">
-			<Hero />
-			<Projects />
-			<Watchlist />
-		</main>
-		<Footer />
-	</div>
+  <div id="top" class="flex min-h-screen flex-col">
+    <div class="mx-auto flex w-full max-w-3xl justify-end px-6 pt-8">
+      <button id="theme-toggle" class="icon-button" type="button" aria-label="Toggle theme" title="Toggle theme"></button>
+    </div>
+
+    <main class="mx-auto w-full max-w-3xl flex-1 space-y-16 px-6 py-14">
+      <Hero />
+      <Projects />
+      <Watchlist />
+
+      <section class="border-t border-line pt-8">
+        <details class="group">
+          <summary class="flex cursor-pointer items-center gap-3 select-none list-none">
+            <img
+              src="/emilumiq-88x31.gif"
+              alt="emilumiq"
+              width="88"
+              height="31"
+              style="image-rendering: pixelated;"
+              loading="lazy"
+            />
+            <span class="text-sm text-muted transition-colors group-hover:text-foreground">my badge</span>
+          </summary>
+          <div class="mt-3 flex items-center gap-2">
+            <input
+              type="text"
+              readonly
+              value='<a href="https://emilumiq.github.io"><img src="https://emilumiq.github.io/emilumiq-88x31.gif" alt="emilumiq" width="88" height="31"></a>'
+              class="copy-badge flex-1 rounded-md border border-line bg-surface px-3 py-2 font-mono text-xs text-muted select-all focus:outline-none focus:border-accent"
+            />
+            <button
+              type="button"
+              class="copy-badge-btn shrink-0 p-0 text-muted transition-colors hover:text-accent"
+              data-code='<a href="https://emilumiq.github.io"><img src="https://emilumiq.github.io/emilumiq-88x31.gif" alt="emilumiq" width="88" height="31"></a>'
+              aria-label="Copy badge code"
+            >
+              <Icon name="copy" class="h-5 w-5" fill />
+            </button>
+          </div>
+        </details>
+      </section>
+    </main>
+
+    <Footer />
+  </div>
 </Base>
 
 <script>
-	const button = document.getElementById('theme-toggle');
-	button?.addEventListener('click', () => {
-		const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-		document.documentElement.dataset.theme = next;
-		localStorage.setItem('theme', next);
-	});
+  import { COPY_SVG, CHECK_SVG, initThemeToggle } from '../lib/icons';
+
+  initThemeToggle();
+
+  for (const btn of document.querySelectorAll<HTMLButtonElement>('.copy-badge-btn')) {
+    btn.addEventListener('click', () => {
+      const code = btn.dataset.code;
+      if (!code) return;
+      navigator.clipboard.writeText(code).then(() => {
+        btn.innerHTML = CHECK_SVG;
+        setTimeout(() => (btn.innerHTML = COPY_SVG), 1500);
+      });
+    });
+  }
 </script>

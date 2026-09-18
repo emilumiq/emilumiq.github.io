@@ -24,6 +24,19 @@ const TYPE_LABELS: Record<string, string> = {
   book: 'book',
 };
 
+const STATUS_COLORS: Record<string, string> = {
+  'In progress': 'bg-emerald-500',
+  'Completed': 'bg-accent',
+  'Planning': 'bg-indigo-400',
+};
+
+function formatDate(raw: string | null): string | null {
+  if (!raw) return null;
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 /**
  * Create a watchlist card.
  *
@@ -39,116 +52,91 @@ export function createCard(
   a.target = '_blank';
   a.rel = 'noopener noreferrer';
   a.className = mode === 'scroller'
-    ? 'group block shrink-0 w-40 sm:w-48'
+    ? 'group block shrink-0 w-28 sm:w-36'
     : 'group block';
 
-  // Poster container
+  // Poster
   const poster = document.createElement('div');
-  poster.className =
-    'relative aspect-[2/3] overflow-hidden rounded-sm border border-line bg-surface';
+  poster.className = 'relative aspect-[2/3] overflow-hidden bg-surface border border-line';
 
   if (entry.image) {
     const img = document.createElement('img');
     img.src = entry.image;
     img.alt = entry.title;
     img.loading = 'lazy';
-    img.className =
-      'h-full w-full object-cover transition duration-300 group-hover:scale-105';
+    img.className = 'h-full w-full object-cover transition duration-300 group-hover:opacity-80';
     poster.append(img);
+  } else {
+    const placeholder = document.createElement('div');
+    placeholder.className = 'h-full w-full bg-line flex items-center justify-center text-muted text-xs';
+    placeholder.textContent = TYPE_LABELS[entry.media_type] ?? entry.media_type;
+    poster.append(placeholder);
   }
 
   const progress = entry.progress ?? 0;
   const maxProg = entry.max_progress;
-  const isComplete =
-    entry.status === 'Completed' || entry.media_type === 'movie';
 
-  // Top-left: status badge
-  if (isComplete) {
-    const check = document.createElement('span');
-    check.className =
-      'absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-accent text-sm font-bold backdrop-blur-sm';
-    check.textContent = '✓';
-    poster.append(check);
-  } else if (entry.status === 'In progress') {
-    const badge = document.createElement('span');
-    badge.className =
-      'absolute left-2 top-2 flex items-center gap-1.5 rounded bg-emerald-600/90 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white backdrop-blur-sm';
-    const dot = document.createElement('span');
-    dot.className = 'h-1.5 w-1.5 rounded-full bg-white animate-pulse';
-    badge.append(dot, document.createTextNode('watching'));
-    poster.append(badge);
-  } else if (entry.status === 'Planning') {
-    const badge = document.createElement('span');
-    badge.className =
-      'absolute left-2 top-2 rounded bg-indigo-500/90 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white backdrop-blur-sm';
-    badge.textContent = 'plan';
-    poster.append(badge);
-  } else {
-    const typeBadge = document.createElement('span');
-    typeBadge.className =
-      'absolute left-2 top-2 rounded bg-black/60 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-white backdrop-blur-sm';
-    typeBadge.textContent = TYPE_LABELS[entry.media_type] ?? entry.media_type;
-    poster.append(typeBadge);
+  // Score badge — bottom-left dark chip
+  if (entry.score != null && entry.score > 0) {
+    const chip = document.createElement('div');
+    chip.className = 'absolute bottom-1.5 left-1.5 z-10 rounded-sm bg-black/60 px-1.5 py-0.5 text-[11px] font-medium text-white shadow-[0_1px_4px_rgba(0,0,0,0.7)]';
+    chip.textContent = entry.score % 1 === 0 ? `${entry.score}` : entry.score.toFixed(1);
+    poster.append(chip);
   }
 
-  // Top-right: score badge
-  if (entry.score != null) {
-    const badge = document.createElement('span');
-    badge.className =
-      'absolute right-2 top-2 rounded px-2 py-0.5 text-xs font-bold bg-amber-500 text-black shadow';
-    badge.textContent = `★ ${entry.score}`;
-    poster.append(badge);
-  }
-
-  // Bottom: progress bar (TV / anime only)
+  // Progress count — bottom-right with gradient
   if (progress > 0 && entry.media_type !== 'movie') {
-    const gradient = document.createElement('div');
-    gradient.className =
-      'absolute inset-x-0 bottom-0 h-7 bg-gradient-to-t from-black/80 to-transparent';
-
-    const bar = document.createElement('div');
     const hasMax = maxProg != null && maxProg > 0;
-    bar.className =
-      'absolute bottom-0 left-0 h-1.5 bg-accent' +
-      (hasMax ? '' : ' w-full animate-pulse opacity-50');
-    if (hasMax) {
-      bar.style.width = `${Math.min(100, (progress / maxProg) * 100)}%`;
-    }
+
+    const gradient = document.createElement('div');
+    gradient.className = 'absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black/70 to-transparent';
 
     const count = document.createElement('span');
-    count.className =
-      'absolute bottom-1.5 right-2 text-xs font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]';
-    count.textContent = hasMax ? `${progress} / ${maxProg}` : `${progress} ep`;
+    count.className = 'absolute bottom-1 right-2 text-[11px] font-semibold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]';
+    count.textContent = hasMax ? `${progress}/${maxProg}` : `${progress} ep`;
 
-    gradient.append(bar);
+    gradient.append(count);
     poster.append(gradient);
-    poster.append(count);
   }
+
+  // Info block
+  const info = document.createElement('div');
+  info.className = 'mt-1.5 px-0.5';
 
   // Title
   const title = document.createElement('p');
-  title.className =
-    'mt-2 truncate text-sm font-medium text-foreground group-hover:text-accent';
+  title.className = 'text-base font-medium text-foreground group-hover:text-accent transition-colors leading-snug line-clamp-2';
   title.textContent = entry.title;
 
-  // Subtitle: type + date
+  // Subtitle: status dot + type + date
   const sub = document.createElement('p');
-  sub.className = 'flex items-center justify-between text-xs text-muted';
-  const typeSpan = document.createElement('span');
-  typeSpan.textContent = TYPE_LABELS[entry.media_type] ?? entry.media_type;
-  sub.append(typeSpan);
+  sub.className = 'mt-0.5 text-sm text-muted flex items-center justify-between gap-1';
 
-  if (entry.progressed_at) {
-    const d = new Date(entry.progressed_at);
-    if (!Number.isNaN(d.getTime())) {
-      const dateSpan = document.createElement('span');
-      dateSpan.className = 'text-muted/70';
-      dateSpan.textContent = d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
-      sub.append(dateSpan);
-    }
+  const subLeft = document.createElement('span');
+
+  const statusColor = entry.status ? STATUS_COLORS[entry.status] : null;
+  if (statusColor) {
+    const dot = document.createElement('span');
+    dot.className = `inline-block h-1.5 w-1.5 rounded-full align-middle mr-1 ${statusColor}`;
+    dot.title = entry.status!;
+    subLeft.append(dot);
   }
 
-  a.append(poster, title, sub);
+  subLeft.append(document.createTextNode(TYPE_LABELS[entry.media_type] ?? entry.media_type));
+
+  const dateStr = formatDate(entry.progressed_at);
+
+  sub.append(subLeft);
+
+  if (dateStr) {
+    const date = document.createElement('span');
+    date.className = 'text-xs text-muted/60';
+    date.textContent = dateStr;
+    sub.append(date);
+  }
+
+  info.append(title, sub);
+  a.append(poster, info);
   return a;
 }
 
@@ -156,7 +144,7 @@ export function createCard(
 export function showFallback(container: HTMLElement, message: string) {
   container.replaceChildren();
   const box = document.createElement('div');
-  box.className = 'border border-line bg-surface px-5 py-8 text-center';
+  box.className = 'px-5 py-8 text-center';
   const p = document.createElement('p');
   p.className = 'text-sm text-muted';
   p.textContent = message;

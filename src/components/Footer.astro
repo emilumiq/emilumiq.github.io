@@ -1,14 +1,49 @@
 ---
 const year = new Date().getFullYear();
 import Icon from './Icon.astro';
-import { links } from '../data/profile';
 ---
 
 <footer class="mt-20 border-t border-line">
-	<div class="mx-auto max-w-3xl px-6 py-8 text-sm text-muted">
-		<nav class="mb-5 grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4" aria-label="social links">
-{links.map((l) => <a href={l.url} target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-accent hover:text-accent-strong">{['forgejo','rutracker','nnmclub'].includes(l.icon) ? <img src={`/${l.icon}.svg`} alt="" loading="lazy" class="logo-icon h-4 w-4 object-contain" /> : <Icon name={l.icon} class="h-4 w-4" />}{l.label}</a>)}
-		</nav>
-		{year} Emily Arnelle · built with <a class="text-accent hover:text-accent-strong" href="https://astro.build" target="_blank" rel="noopener noreferrer">Astro</a>
+	<div class="mx-auto max-w-3xl px-6 py-8 text-base text-muted">
+
+		<div class="mb-6">
+			<p class="mb-3 text-sm text-muted/70">telegram</p>
+			<div class="flex flex-wrap gap-3">
+				<a href="https://t.me/+1gd8fQTSZYAxYjhi" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-accent hover:text-accent-strong"><Icon name="send" class="h-3.5 w-3.5" />blog</a>
+				<a href="https://t.me/emilumiq" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-accent hover:text-accent-strong"><Icon name="send" class="h-3.5 w-3.5" />dm</a>
+				<a href="https://t.me/neomovies_news" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-accent hover:text-accent-strong"><Icon name="send" class="h-3.5 w-3.5" />neo</a>
+			</div>
+		</div>
+
+		<div class="mb-6">
+			<p class="mb-3 text-sm text-muted/70">links</p>
+			<div class="flex flex-wrap gap-3">
+				<a href="https://github.com/emilumiq" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-accent hover:text-accent-strong"><Icon name="github" class="h-3.5 w-3.5" />github</a>
+				<a href="https://git.disroot.org/emilumiq" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-accent hover:text-accent-strong"><img src="/forgejo.svg" alt="" loading="lazy" class="logo-icon h-3.5 w-3.5 object-contain" />disroot</a>
+			</div>
+		</div>
+
+		<div class="mb-6">
+			<p class="mb-3 text-sm text-muted/70">badges</p>
+			<div class="flex flex-wrap items-center gap-x-1 gap-y-1.5">
+				<a href="https://emilumiq.github.io" target="_blank" rel="noopener"><img src="/emilumiq-88x31.gif" alt="emilumiq" width="88" height="31" style="image-rendering: pixelated;"></a>
+				<a href="https://d7tun6.neome.uk" target="_blank" rel="noopener"><img src="/d7tun6-88x31.gif" alt="d7tun6" width="88" height="31"></a>
+				<a href="https://myslivets.com/" target="_blank" rel="noopener"><img src="/myslivets-88x31.png" alt="myslivets" width="88" height="31"></a>
+				<a href="https://otomir23.me/" target="_blank" rel="noopener"><img src="/otomir23-88x31.png" alt="otomir23" width="88" height="31" style="image-rendering: pixelated;"></a>
+				<img title="trans lesbi" style="image-rendering: pixelated;" src="https://badge.les.bi/88x31/trans/lesbi/half/outset.png" width="88" height="31">
+				<img src="/animegay.gif" alt="animegay" width="88" height="31">
+				<a href="https://nixos.org" target="_blank" rel="noopener"><img src="/nixos-badge.gif" alt="nixos" width="88" height="31"></a>
+				<img src="/macos-88x31.gif" alt="macos" width="88" height="31">
+				<a href="https://jellyfin.org" target="_blank" rel="noopener"><img src="/jellyfin-88x31.gif" alt="jellyfin" width="88" height="31"></a>
+				<img src="/yuri-yukiyuri.gif" alt="yuri" width="88" height="31">
+				<img src="/portal-88x31.png" alt="portal" width="88" height="31">
+				<img src="/yuri-88x31.gif" alt="yuri" width="88" height="31">
+				<img src="/yuri-88x31-2.gif" alt="yuri" width="88" height="31">
+				<img src="/kangel-88x31.gif" alt="kangel" width="88" height="31">
+				<img src="/manga-badge.gif" alt="manga mais anime" width="88" height="31">
+			</div>
+		</div>
+
+		{year} Emily Aoi · built with <a class="text-accent hover:text-accent-strong" href="https://astro.build" target="_blank" rel="noopener noreferrer">Astro</a>
 	</div>
 </footer>

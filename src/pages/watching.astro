@@ -1,33 +1,49 @@
 ---
 import Base from '../layouts/Base.astro';
+import Footer from '../components/Footer.astro';
 ---
 
 <Base title="Watchlist · Emily">
-  <main class="mx-auto w-full max-w-3xl px-6 py-10 sm:py-14">
-    <a href="/" class="inline-flex text-base text-accent hover:text-accent-strong">← back</a>
-
-    <div class="mt-8 flex items-end justify-between border-b border-line pb-4">
-      <div>
-        <p class="text-sm uppercase tracking-wide text-muted">library</p>
-        <h1 class="mt-1 text-4xl font-bold text-foreground">watchlist</h1>
-      </div>
-      <span id="watchlist-status" class="text-sm text-muted" aria-live="polite">loading…</span>
+  <div class="flex min-h-screen flex-col">
+    <div class="mx-auto flex w-full max-w-3xl justify-end px-6 pt-8">
+      <button id="theme-toggle" class="icon-button" type="button" aria-label="Toggle theme" title="Toggle theme"></button>
     </div>
 
-    <nav class="mt-6 flex gap-1" aria-label="Status filter">
-      <button data-status="" class="status-tab status-tab-active rounded-md px-4 py-2 text-sm font-medium">All</button>
-      <button data-status="1" class="status-tab status-tab-inactive rounded-md px-4 py-2 text-sm font-medium">In progress</button>
-      <button data-status="2" class="status-tab status-tab-inactive rounded-md px-4 py-2 text-sm font-medium">Completed</button>
-      <button data-status="3" class="status-tab status-tab-inactive rounded-md px-4 py-2 text-sm font-medium">Planning</button>
-    </nav>
+    <main class="mx-auto w-full max-w-3xl flex-1 px-6 py-10 sm:py-14">
+      <a href="/" class="inline-flex text-base text-accent hover:text-accent-strong">← back</a>
 
-    <div id="watchlist-grid" class="mt-6 grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-4"></div>
-  </main>
+      <div class="mt-8 flex items-end justify-between border-b border-line pb-4">
+        <div>
+          <h1 class="text-4xl font-bold text-foreground">watchlist</h1>
+          <div class="mt-1 flex flex-wrap gap-3 text-xs text-muted/70">
+            <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"></span> watching</span>
+            <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-accent"></span> completed</span>
+            <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-indigo-400"></span> planned</span>
+          </div>
+        </div>
+        <span id="watchlist-status" class="text-sm text-muted" aria-live="polite">loading…</span>
+      </div>
+
+      <nav class="mt-6 flex gap-1" aria-label="Status filter">
+        <button data-status="" class="status-tab status-tab-active rounded-md px-4 py-2 text-sm font-medium">All</button>
+        <button data-status="1" class="status-tab status-tab-inactive rounded-md px-4 py-2 text-sm font-medium">In progress</button>
+        <button data-status="2" class="status-tab status-tab-inactive rounded-md px-4 py-2 text-sm font-medium">Completed</button>
+        <button data-status="3" class="status-tab status-tab-inactive rounded-md px-4 py-2 text-sm font-medium">Planning</button>
+      </nav>
+
+      <div id="watchlist-grid" class="mt-6 grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-4"></div>
+    </main>
+
+    <Footer />
+  </div>
 </Base>
 
 <script>
   import { createCard, showFallback } from '../lib/cards';
   import { fetchAll, type YamtrackEntry } from '../lib/yamtrack';
+  import { initThemeToggle } from '../lib/icons';
+
+  initThemeToggle();
 
   const grid = document.getElementById('watchlist-grid') as HTMLElement | null;
   const statusEl = document.getElementById('watchlist-status') as HTMLElement | null;

@@ -95,7 +95,7 @@ body {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: -1px;
+  bottom: 0;
   height: 2px;
   background: transparent;
   transition: background 0.15s;

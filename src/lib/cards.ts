@@ -167,22 +167,21 @@ function entryTime(entry: Entry): number {
 }
 
 /**
- * Carousel order: in progress first, then paused, then completed (newest
- * first), then planning and dropped — always newest update first inside a
- * group, falling back to the title.
+ * Carousel order: in progress and paused first (newest first), everything
+ * else — planning, completed, dropped — blended by recency, so a planning
+ * added last week sits above a series finished years ago and a recently
+ * dropped title is not buried under old completed ones. Falls back to the
+ * title inside a group.
  */
-const LIST_RANK: Record<string, number> = {
+const FIXED_RANK: Record<string, number> = {
   'In progress': 0,
   Paused: 1,
-  Completed: 2,
-  Planning: 3,
-  Dropped: 4,
 };
 
 export function sortWatchlist(entries: Entry[]): Entry[] {
   return [...entries].sort((a, b) => {
-    const ar = LIST_RANK[a.status ?? ''] ?? 5;
-    const br = LIST_RANK[b.status ?? ''] ?? 5;
+    const ar = FIXED_RANK[a.status ?? ''] ?? 2;
+    const br = FIXED_RANK[b.status ?? ''] ?? 2;
     if (ar !== br) return ar - br;
 
     const at = entryTime(a);

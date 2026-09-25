@@ -12,10 +12,10 @@ export function initThemeToggle() {
   const toggle = document.getElementById('theme-toggle');
   if (!toggle) return;
 
-  function updateIcon() {
+  const updateIcon = () => {
     const isDark = document.documentElement.dataset.theme === 'dark';
     toggle.innerHTML = isDark ? SUN_SVG : MOON_SVG;
-  }
+  };
 
   toggle.addEventListener('click', () => {
     const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';

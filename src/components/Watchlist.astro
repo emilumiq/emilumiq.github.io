@@ -1,11 +1,14 @@
 ---
-import { watchlist } from '../data/profile';
+import { watchlist, reading } from '../data/profile';
+
+const skeletonCard = 'animate-pulse-soft shrink-0 w-28 sm:w-36';
+const skeleton = { base: 'aspect-[2/3] bg-surface', title: 'mt-2 h-3.5 w-3/4 bg-surface', sub: 'mt-1.5 h-3 w-1/3 bg-surface' };
 ---
 
 <section id="watching" class="scroll-mt-20">
   <div class="flex flex-wrap items-end justify-between gap-3">
     <h2 class="text-2xl font-semibold text-foreground">{watchlist.title}</h2>
-    <a href="/watching" class="text-base text-accent hover:text-accent-strong transition-colors">watch all</a>
+    <a href="/watching" class="text-base text-accent hover:text-accent-strong transition-colors">see all</a>
   </div>
   <p class="mt-1 text-base text-muted">{watchlist.note}</p>
   <div class="mt-1 flex flex-wrap gap-3 text-xs text-muted/70">
@@ -18,10 +21,10 @@ import { watchlist } from '../data/profile';
     <button id="scroll-left" class="scroll-arrow-btn is-hidden text-accent absolute -left-8 top-1/3 -translate-y-1/2 hidden sm:block z-10" aria-label="Scroll left">‹</button>
     <div id="watchlist-grid" class="watchlist-scroller flex gap-3 overflow-x-auto pb-2 px-1">
       {Array.from({ length: watchlist.limit }).map(() => (
-        <div class="animate-pulse-soft shrink-0 w-28 sm:w-36">
-          <div class="aspect-[2/3] bg-surface" />
-          <div class="mt-2 h-3.5 w-3/4 bg-surface" />
-          <div class="mt-1.5 h-3 w-1/3 bg-surface" />
+        <div class={skeletonCard}>
+          <div class={skeleton.base} />
+          <div class={skeleton.title} />
+          <div class={skeleton.sub} />
         </div>
       ))}
     </div>
@@ -29,53 +32,136 @@ import { watchlist } from '../data/profile';
   </div>
 </section>
 
+<section id="reading" class="mt-14 scroll-mt-20">
+  <div class="flex flex-wrap items-end justify-between gap-3">
+    <h2 class="text-2xl font-semibold text-foreground">{reading.title}</h2>
+    <a href="/reading" class="text-base text-accent hover:text-accent-strong transition-colors">see all</a>
+  </div>
+  <p class="mt-1 text-base text-muted">{reading.note}</p>
+  <div class="mt-1 flex flex-wrap gap-3 text-xs text-muted/70">
+    <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"></span> reading</span>
+    <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-accent"></span> completed</span>
+    <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-rose-400"></span> dropped</span>
+  </div>
+
+  <div class="mt-5 relative">
+    <button id="reading-scroll-left" class="scroll-arrow-btn is-hidden text-accent absolute -left-8 top-1/3 -translate-y-1/2 hidden sm:block z-10" aria-label="Scroll left">‹</button>
+    <div id="reading-grid" class="watchlist-scroller flex gap-3 overflow-x-auto pb-2 px-1">
+      {Array.from({ length: reading.limit }).map(() => (
+        <div class={skeletonCard}>
+          <div class={skeleton.base} />
+          <div class={skeleton.title} />
+          <div class={skeleton.sub} />
+        </div>
+      ))}
+    </div>
+    <button id="reading-scroll-right" class="scroll-arrow-btn is-hidden text-accent absolute -right-8 top-1/3 -translate-y-1/2 hidden sm:block z-10" aria-label="Scroll right">›</button>
+  </div>
+</section>
+
 <script>
-  import { createCard, showFallback } from '../lib/cards';
+  import { createCard, showFallback, sortWatchlist, type Entry } from '../lib/cards';
   import { fetchAll } from '../lib/yamtrack';
-  import { watchlist } from '../data/profile';
+  import { fetchAniList, mergeUnique, type AniListBundle } from '../lib/anilist';
+  import { onVisibleInterval } from '../lib/live';
+  import { watchlist, reading } from '../data/profile';
 
-  const grid = document.getElementById('watchlist-grid')!;
-  const leftBtn = document.getElementById('scroll-left')!;
-  const rightBtn = document.getElementById('scroll-right')!;
   const SCROLL_AMOUNT = 220;
+  const REFRESH_MS = 30_000;
+  const TRACKER_EVERY = 4;
 
-  function updateArrows() {
-    const maxScroll = grid.scrollWidth - grid.clientWidth;
-    leftBtn.classList.toggle('is-hidden', grid.scrollLeft <= 0);
-    rightBtn.classList.toggle('is-hidden', grid.scrollLeft >= maxScroll - 2);
-  }
+  function setupScroller(gridId: string, leftId: string, rightId: string) {
+    const grid = document.getElementById(gridId)!;
+    const leftBtn = document.getElementById(leftId)!;
+    const rightBtn = document.getElementById(rightId)!;
 
-  leftBtn.addEventListener('click', () => {
-    grid.scrollBy({ left: -SCROLL_AMOUNT, behavior: 'smooth' });
-  });
+    const updateArrows = () => {
+      const maxScroll = grid.scrollWidth - grid.clientWidth;
+      leftBtn.classList.toggle('is-hidden', grid.scrollLeft <= 0);
+      rightBtn.classList.toggle('is-hidden', grid.scrollLeft >= maxScroll - 2);
+    };
 
-  rightBtn.addEventListener('click', () => {
-    grid.scrollBy({ left: SCROLL_AMOUNT, behavior: 'smooth' });
-  });
+    leftBtn.addEventListener('click', () =>
+      grid.scrollBy({ left: -SCROLL_AMOUNT, behavior: 'smooth' }),
+    );
+    rightBtn.addEventListener('click', () =>
+      grid.scrollBy({ left: SCROLL_AMOUNT, behavior: 'smooth' }),
+    );
+    grid.addEventListener('scroll', updateArrows);
 
-  grid.addEventListener('scroll', updateArrows);
+    window.addEventListener(
+      'wheel',
+      (event) => {
+        const scroller = (event.target as HTMLElement).closest?.(`#${gridId}`) as HTMLElement | null;
+        if (scroller && event.shiftKey) {
+          event.preventDefault();
+          scroller.scrollLeft += event.deltaY;
+          setTimeout(updateArrows, 50);
+        }
+      },
+      { passive: false },
+    );
 
-  window.addEventListener('wheel', (event) => {
-    const scroller = (event.target as HTMLElement).closest?.('#watchlist-grid') as HTMLElement | null;
-    if (scroller && event.shiftKey) {
-      event.preventDefault();
-      scroller.scrollLeft += event.deltaY;
-      setTimeout(updateArrows, 50);
-    }
-  }, { passive: false });
-
-  fetchAll()
-    .then((items) => {
-      const top = items.slice(0, watchlist.limit);
+    const render = (items: Entry[], limit: number, emptyMessage: string) => {
+      const top = items.slice(0, limit);
+      const keepScroll = grid.scrollLeft;
       if (top.length === 0) {
-        showFallback(grid, 'nothing here right now');
+        showFallback(grid, emptyMessage);
         return;
       }
-      grid.className = 'watchlist-scroller flex gap-3 overflow-x-auto pb-2 px-1';
-      grid.replaceChildren(
-        ...top.map((e) => createCard(e, 'scroller')),
-      );
+      grid.replaceChildren(...top.map((e) => createCard(e, 'scroller')));
+      grid.scrollLeft = keepScroll;
       updateArrows();
-    })
-    .catch(() => showFallback(grid, 'could not load the watchlist'));
+    };
+
+    return { render };
+  }
+
+  const watching = setupScroller('watchlist-grid', 'scroll-left', 'scroll-right');
+  const readingScroller = setupScroller('reading-grid', 'reading-scroll-left', 'reading-scroll-right');
+
+  let trackerCache: Entry[] = [];
+  let anilistCache: AniListBundle = { generatedAt: '', username: '', anime: [], manga: [] };
+  let tick = 0;
+
+  function paint() {
+    watching.render(
+      sortWatchlist(mergeUnique(trackerCache, anilistCache.anime)),
+      watchlist.limit,
+      'nothing here right now',
+    );
+    readingScroller.render(sortWatchlist(anilistCache.manga), reading.limit, 'nothing here right now');
+  }
+
+  async function refresh(options: { forceAnilist?: boolean; withTracker?: boolean } = {}) {
+    const [tracker, anilist] = await Promise.all([
+      options.withTracker === false
+        ? trackerCache
+        : fetchAll().catch(() => trackerCache),
+      options.forceAnilist
+        ? fetchAniList({ force: true }).catch(() => null)
+        : fetchAniList().catch(() => null),
+    ]);
+
+    if (options.withTracker !== false) trackerCache = tracker;
+    if (anilist) anilistCache = anilist;
+
+    const loaded = anilist !== null || trackerCache.length > 0;
+    if (loaded) paint();
+    return loaded;
+  }
+
+  void refresh().then((loaded) => {
+    if (loaded) return;
+    watching.render([], watchlist.limit, 'could not load the watchlist');
+    readingScroller.render([], reading.limit, 'could not load the reading list');
+  });
+
+  onVisibleInterval(REFRESH_MS, () => {
+    tick += 1;
+    void refresh({
+      forceAnilist: true,
+      withTracker: tick % TRACKER_EVERY === 1,
+    });
+  });
 </script>

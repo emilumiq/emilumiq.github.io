@@ -25,3 +25,7 @@ pnpm-debug.log*
 
 # nix
 result
+
+# vercel
+.vercel/
+.vercel

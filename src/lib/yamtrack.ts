@@ -1,10 +1,13 @@
 /**
  * Client-side Yamtrack API helpers.
  *
- * Fetches directly from the Yamtrack instance using
- * PUBLIC_YAMTRACK_URL and PUBLIC_YAMTRACK_TOKEN env vars
- * (inlined at build time by Astro).
+ * Data requests go through the Vercel proxy (`api/yamtrack.ts`), which
+ * attaches the Yamtrack token server-side — the token never ships in the
+ * browser bundle. PUBLIC_YAMTRACK_URL is only used for poster URLs,
+ * which are served publicly without auth.
  */
+
+import { apiOrigin } from './api';
 
 export const PAGE_SIZE = 24;
 
@@ -69,26 +72,16 @@ function externalUrl(
   }
 }
 
-function getOrigin(): string {
-  return (
-    import.meta.env.PUBLIC_YAMTRACK_URL ??
-    import.meta.env.YAMTRACK_URL ??
-    'https://list.neome.uk'
-  );
-}
-
-function getToken(): string | null {
-  const t =
-    import.meta.env.PUBLIC_YAMTRACK_TOKEN ??
-    import.meta.env.YAMTRACK_TOKEN ??
-    null;
-  return typeof t === 'string' && t.trim() ? t.trim() : null;
+/** Public origin used to build poster URLs (images need no auth). */
+function getImageOrigin(): string {
+  const configured = import.meta.env.PUBLIC_YAMTRACK_URL as string | undefined;
+  return (configured || 'https://list.neome.uk').replace(/\/+$/, '');
 }
 
 function normalizeImage(image: string | null | undefined): string | null {
   if (!image) return null;
   if (image.startsWith('http')) return image;
-  const origin = getOrigin();
+  const origin = getImageOrigin();
   return `${origin}${image.startsWith('/') ? '' : '/'}${image}`;
 }
 
@@ -109,7 +102,6 @@ function mapEntry(raw: YamtrackRawResponse): YamtrackEntry | null {
   const mediaType = item.media_type ?? 'tv';
   const source = item.source ?? '';
   const mediaId = item.media_id ?? '';
-  const origin = getOrigin();
   const extUrl =
     item.media_id && item.source
       ? externalUrl(item.source, mediaType, item.media_id)
@@ -124,47 +116,26 @@ function mapEntry(raw: YamtrackRawResponse): YamtrackEntry | null {
     progress: raw.progress ?? null,
     max_progress: raw.max_progress ?? null,
     progressed_at: raw.progressed_at ?? null,
-    url: extUrl ?? origin,
+    url: extUrl ?? getImageOrigin(),
   };
 }
 
-/**
- * Shared fetch with auto-detection of Token vs Bearer auth scheme.
- * Caches the working scheme to avoid double requests on subsequent calls.
- */
-let authScheme: 'Token' | 'Bearer' | null = null;
-
+/** Fetch one page through the Vercel proxy — no credentials in the browser. */
 async function apiFetch(
   url: URL,
 ): Promise<{ ok: boolean; status: number; data: { count?: number; results?: YamtrackRawResponse[] } | null }> {
-  const token = getToken();
-  if (!token) return { ok: false, status: 0, data: null };
-
-  const schemes: ('Token' | 'Bearer')[] = authScheme
-    ? [authScheme]
-    : ['Token', 'Bearer'];
-
-  for (const scheme of schemes) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 10_000);
-    try {
-      const res = await fetch(url.toString(), {
-        headers: { Authorization: `${scheme} ${token}` },
-        signal: controller.signal,
-      });
-      if (res.ok) {
-        authScheme = scheme;
-        const data = (await res.json()) as { count?: number; results?: YamtrackRawResponse[] };
-        return { ok: true, status: res.status, data };
-      }
-      if (res.status !== 401) return { ok: false, status: res.status, data: null };
-    } catch {
-      return { ok: false, status: 0, data: null };
-    } finally {
-      clearTimeout(timer);
-    }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10_000);
+  try {
+    const res = await fetch(url.toString(), { signal: controller.signal });
+    if (!res.ok) return { ok: false, status: res.status, data: null };
+    const data = (await res.json()) as { count?: number; results?: YamtrackRawResponse[] };
+    return { ok: true, status: res.status, data };
+  } catch {
+    return { ok: false, status: 0, data: null };
+  } finally {
+    clearTimeout(timer);
   }
-  return { ok: false, status: 401, data: null };
 }
 
 /**
@@ -178,8 +149,7 @@ export async function fetchMediaPage(
   offset: number,
   limit: number,
 ): Promise<WatchlistPage> {
-  const origin = getOrigin();
-  const url = new URL('/api/media/', origin);
+  const url = new URL('/api/yamtrack', apiOrigin());
   url.searchParams.set('media_type', mediaType);
   url.searchParams.set('limit', String(limit));
   url.searchParams.set('offset', String(offset));
@@ -246,9 +216,6 @@ export function createWatchlistLoader(status = '', pageSize = PAGE_SIZE) {
  * fetched once and reused across all status tabs (filtered client-side).
  */
 export async function fetchAll(): Promise<YamtrackEntry[]> {
-  const token = getToken();
-  if (!token) return [];
-
   const types = ['tv', 'movie', 'anime'] as const;
   const pages = await Promise.all(
     types.map((t) => fetchAllPages(t)),
@@ -307,19 +274,14 @@ export async function fetchAll(): Promise<YamtrackEntry[]> {
 }
 
 async function fetchAllPages(mediaType: string): Promise<YamtrackEntry[]> {
-  const token = getToken();
-  if (!token) return [];
-
-  const origin = getOrigin();
   const all: YamtrackEntry[] = [];
   let offset = 0;
 
   for (let safety = 0; safety < 50; safety++) {
-    const url = new URL('/api/media/', origin);
+    const url = new URL('/api/yamtrack', apiOrigin());
     url.searchParams.set('media_type', mediaType);
     url.searchParams.set('limit', '100');
     url.searchParams.set('offset', String(offset));
-    url.searchParams.set('t', String(Date.now()));
 
     const { ok, data } = await apiFetch(url);
     if (!ok || !data) break;

@@ -80,6 +80,12 @@ export const projects: {
 
 export const watchlist = {
 	title: 'watching now',
-	note: 'tv shows & movies, live from my tracker',
+	note: 'tv shows & movies, live from my tracker + anilist',
+	limit: 8,
+};
+
+export const reading = {
+	title: 'reading now',
+	note: 'manga, live from anilist',
 	limit: 8,
 };

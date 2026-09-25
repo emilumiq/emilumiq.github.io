@@ -26,8 +26,14 @@ const TYPE_LABELS: Record<string, string> = {
 
 const STATUS_COLORS: Record<string, string> = {
   'In progress': 'bg-emerald-500',
-  'Completed': 'bg-accent',
-  'Planning': 'bg-indigo-400',
+  Completed: 'bg-accent',
+  Planning: 'bg-indigo-400',
+  Paused: 'bg-amber-500',
+  Dropped: 'bg-rose-400',
+};
+
+const PROGRESS_UNITS: Record<string, string> = {
+  manga: 'ch',
 };
 
 function formatDate(raw: string | null): string | null {
@@ -76,7 +82,7 @@ export function createCard(
   const progress = entry.progress ?? 0;
   const maxProg = entry.max_progress;
 
-  // Score badge — bottom-left dark chip
+  // Score badge (only the user's own score) — bottom-left dark chip
   if (entry.score != null && entry.score > 0) {
     const chip = document.createElement('div');
     chip.className = 'absolute bottom-1.5 left-1.5 z-10 rounded-sm bg-black/60 px-1.5 py-0.5 text-[11px] font-medium text-white shadow-[0_1px_4px_rgba(0,0,0,0.7)]';
@@ -93,7 +99,9 @@ export function createCard(
 
     const count = document.createElement('span');
     count.className = 'absolute bottom-1 right-2 text-[11px] font-semibold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]';
-    count.textContent = hasMax ? `${progress}/${maxProg}` : `${progress} ep`;
+    count.textContent = hasMax
+      ? `${progress}/${maxProg}`
+      : `${progress} ${PROGRESS_UNITS[entry.media_type] ?? 'ep'}`;
 
     gradient.append(count);
     poster.append(gradient);
@@ -150,4 +158,37 @@ export function showFallback(container: HTMLElement, message: string) {
   p.textContent = message;
   box.append(p);
   container.append(box);
+}
+
+function entryTime(entry: Entry): number {
+  if (!entry.progressed_at) return 0;
+  const t = Date.parse(entry.progressed_at);
+  return Number.isNaN(t) ? 0 : t;
+}
+
+/**
+ * Carousel order: in progress first, then paused, then completed (newest
+ * first), then planning and dropped — always newest update first inside a
+ * group, falling back to the title.
+ */
+const LIST_RANK: Record<string, number> = {
+  'In progress': 0,
+  Paused: 1,
+  Completed: 2,
+  Planning: 3,
+  Dropped: 4,
+};
+
+export function sortWatchlist(entries: Entry[]): Entry[] {
+  return [...entries].sort((a, b) => {
+    const ar = LIST_RANK[a.status ?? ''] ?? 5;
+    const br = LIST_RANK[b.status ?? ''] ?? 5;
+    if (ar !== br) return ar - br;
+
+    const at = entryTime(a);
+    const bt = entryTime(b);
+    if (at !== bt) return bt - at;
+
+    return a.title.localeCompare(b.title);
+  });
 }

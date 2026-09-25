@@ -80,20 +80,41 @@ body {
 
 /* ── Status tabs ── */
 
-.status-tab-active {
-  border: 1px solid var(--color-accent);
-  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-bg));
-  color: var(--color-foreground);
-}
-
-.status-tab-inactive {
-  border: 1px solid transparent;
+.status-tab {
+  position: relative;
+  border: none;
+  background: none;
+  padding: 0.35rem 0 0.7rem;
   color: var(--color-muted);
+  cursor: pointer;
+  transition: color 0.15s;
 }
 
-.status-tab-inactive:hover {
+.status-tab::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: transparent;
+  transition: background 0.15s;
+}
+
+.status-tab:hover {
   color: var(--color-foreground);
-  border-color: var(--color-line);
+}
+
+.status-tab-active {
+  color: var(--color-foreground);
+}
+
+.status-tab-active::after {
+  background: var(--color-accent);
+}
+
+.status-tab.is-empty {
+  display: none;
 }
 
 /* ── Accent filter for SVG icons ── */

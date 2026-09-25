@@ -4,7 +4,7 @@ import Footer from '../components/Footer.astro';
 
 const statuses = [
   { value: '', label: 'All' },
-  { value: 'In progress', label: 'In progress' },
+  { value: 'In progress', label: 'Reading' },
   { value: 'Completed', label: 'Completed' },
   { value: 'Planning', label: 'Planning' },
   { value: 'Paused', label: 'Paused' },
@@ -12,7 +12,7 @@ const statuses = [
 ];
 ---
 
-<Base title="Watchlist · Emily">
+<Base title="Reading · Emily">
   <div class="flex min-h-screen flex-col">
     <div class="mx-auto flex w-full max-w-3xl justify-end px-6 pt-8">
       <button id="theme-toggle" class="icon-button" type="button" aria-label="Toggle theme" title="Toggle theme"></button>
@@ -23,9 +23,9 @@ const statuses = [
 
       <div class="mt-8 flex items-end justify-between border-b border-line pb-4">
         <div>
-          <h1 class="text-4xl font-bold text-foreground">watching</h1>
+          <h1 class="text-4xl font-bold text-foreground">reading</h1>
           <div class="mt-1 flex flex-wrap gap-3 text-xs text-muted/70">
-            <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"></span> watching</span>
+            <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"></span> reading</span>
             <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-accent"></span> completed</span>
             <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-indigo-400"></span> planned</span>
             <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-amber-500"></span> paused</span>
@@ -57,34 +57,19 @@ const statuses = [
   import { initThemeToggle } from '../lib/icons';
   import { mountListPage } from '../lib/listPage';
   import { sortWatchlist, type Entry } from '../lib/cards';
-  import { fetchAll } from '../lib/yamtrack';
-  import { fetchAniList, mergeUnique } from '../lib/anilist';
+  import { fetchAniList } from '../lib/anilist';
 
   initThemeToggle();
 
-  const REFRESH_MS = 30_000;
-  const TRACKER_EVERY = 4;
-
-  let tick = 0;
-  let trackerCache: Entry[] = [];
-  let anilistCache: Entry[] = [];
+  let mangaCache: Entry[] = [];
 
   mountListPage({
-    refreshMs: REFRESH_MS,
+    refreshMs: 30_000,
     load: async () => {
-      const withTracker = tick % TRACKER_EVERY === 0;
-      tick += 1;
-
-      const [tracker, anilist] = await Promise.all([
-        withTracker ? fetchAll().catch(() => trackerCache) : trackerCache,
-        fetchAniList({ force: true }).catch(() => null),
-      ]);
-
-      if (withTracker) trackerCache = tracker;
-      if (anilist) anilistCache = anilist.anime;
-
-      return sortWatchlist(mergeUnique(trackerCache, anilistCache));
+      const anilist = await fetchAniList({ force: true }).catch(() => null);
+      if (anilist) mangaCache = anilist.manga;
+      return sortWatchlist(mangaCache);
     },
-    errorMessage: 'could not load the watchlist',
+    errorMessage: 'could not load the reading list',
   });
 </script>

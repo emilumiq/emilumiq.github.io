@@ -64,13 +64,10 @@ const skeleton = { base: 'aspect-[2/3] bg-surface', title: 'mt-2 h-3.5 w-3/4 bg-
 <script>
   import { createCard, showFallback, sortWatchlist, type Entry } from '../lib/cards';
   import { fetchAll } from '../lib/yamtrack';
-  import { fetchAniList, mergeUnique, type AniListBundle } from '../lib/anilist';
-  import { onVisibleInterval } from '../lib/live';
+  import { fetchAniList, mergeUnique } from '../lib/anilist';
   import { watchlist, reading } from '../data/profile';
 
   const SCROLL_AMOUNT = 220;
-  const REFRESH_MS = 30_000;
-  const TRACKER_EVERY = 4;
 
   function setupScroller(gridId: string, leftId: string, rightId: string) {
     const grid = document.getElementById(gridId)!;
@@ -122,48 +119,24 @@ const skeleton = { base: 'aspect-[2/3] bg-surface', title: 'mt-2 h-3.5 w-3/4 bg-
   const watching = setupScroller('watchlist-grid', 'scroll-left', 'scroll-right');
   const readingScroller = setupScroller('reading-grid', 'reading-scroll-left', 'reading-scroll-right');
 
-  let trackerCache: Entry[] = [];
-  let anilistCache: AniListBundle = { generatedAt: '', username: '', anime: [], manga: [] };
-  let tick = 0;
+  void Promise.all([fetchAll().catch(() => null), fetchAniList().catch(() => null)]).then(
+    ([tracker, anilist]) => {
+      if (!tracker && !anilist) {
+        watching.render([], watchlist.limit, 'could not load the watchlist');
+        readingScroller.render([], reading.limit, 'could not load the reading list');
+        return;
+      }
 
-  function paint() {
-    watching.render(
-      sortWatchlist(mergeUnique(trackerCache, anilistCache.anime)),
-      watchlist.limit,
-      'nothing here right now',
-    );
-    readingScroller.render(sortWatchlist(anilistCache.manga), reading.limit, 'nothing here right now');
-  }
-
-  async function refresh(options: { forceAnilist?: boolean; withTracker?: boolean } = {}) {
-    const [tracker, anilist] = await Promise.all([
-      options.withTracker === false
-        ? trackerCache
-        : fetchAll().catch(() => trackerCache),
-      options.forceAnilist
-        ? fetchAniList({ force: true }).catch(() => null)
-        : fetchAniList().catch(() => null),
-    ]);
-
-    if (options.withTracker !== false) trackerCache = tracker;
-    if (anilist) anilistCache = anilist;
-
-    const loaded = anilist !== null || trackerCache.length > 0;
-    if (loaded) paint();
-    return loaded;
-  }
-
-  void refresh().then((loaded) => {
-    if (loaded) return;
-    watching.render([], watchlist.limit, 'could not load the watchlist');
-    readingScroller.render([], reading.limit, 'could not load the reading list');
-  });
-
-  onVisibleInterval(REFRESH_MS, () => {
-    tick += 1;
-    void refresh({
-      forceAnilist: true,
-      withTracker: tick % TRACKER_EVERY === 1,
-    });
-  });
+      watching.render(
+        sortWatchlist(mergeUnique(tracker ?? [], anilist?.anime ?? [])),
+        watchlist.limit,
+        'nothing here right now',
+      );
+      readingScroller.render(
+        sortWatchlist(anilist?.manga ?? []),
+        reading.limit,
+        'nothing here right now',
+      );
+    },
+  );
 </script>

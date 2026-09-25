@@ -1,24 +1,13 @@
-/**
- * Shared behaviour for the /watching and /reading list pages:
- * status tabs, grid rendering and empty-state handling.
- */
-
 import { createCard, showFallback, type Entry } from './cards';
-import { onVisibleInterval } from './live';
 
 export type ListPageOptions = {
-  /** Resolves the full (unfiltered) list of entries. */
   load: () => Promise<Entry[]>;
-  /** Re-run `load` on this interval to keep the list fresh. */
-  refreshMs?: number;
-  /** Message shown when the current filter matches nothing. */
   emptyMessage?: string;
   errorMessage?: string;
 };
 
 export function mountListPage({
   load,
-  refreshMs,
   emptyMessage = 'nothing here',
   errorMessage = 'could not load the list',
 }: ListPageOptions): void {
@@ -84,14 +73,4 @@ export function mountListPage({
       showFallback(grid, errorMessage);
       statusEl.textContent = '';
     });
-
-  if (refreshMs) {
-    onVisibleInterval(refreshMs, () => {
-      load()
-        .then(apply)
-        .catch(() => {
-          /* keep the last good list */
-        });
-    });
-  }
 }

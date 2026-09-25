@@ -21,26 +21,8 @@ export const links: LinkItem[] = [
 	{ label: 'Telegram blog', url: 'https://t.me/+1gd8fQTSZYAxYjhi', icon: 'telegram' },
 	{ label: 'DM @emilumiq', url: 'https://t.me/emilumiq', icon: 'telegram' },
 	{ label: 'GitHub', url: 'https://github.com/emilumiq', icon: 'github' },
-	{
-		label: 'Disroot',
-		url: 'https://git.disroot.org/emilumiq',
-		icon: 'forgejo',
-	},
-	{
-		label: 'RuTracker',
-		url: 'https://rutracker.org/forum/profile.php?mode=viewprofile&u=51945983',
-		icon: 'rutracker',
-	},
-	{
-		label: 'NNM Club',
-		url: 'https://nnmclub.to/forum/profile.php?mode=viewprofile&u=14390161',
-		icon: 'nnmclub',
-	},
-	{
-		label: 'Neo (open source)',
-		url: 'https://t.me/neomovies_news',
-		icon: 'telegram',
-	},
+	{ label: 'Disroot', url: 'https://git.disroot.org/emilumiq', icon: 'forgejo', },
+	{ label: 'Neo (open source)', url: 'https://t.me/neomovies_news', icon: 'telegram', },
 ];
 
 export const projects: {
@@ -80,12 +62,12 @@ export const projects: {
 
 export const watchlist = {
 	title: 'watching now',
-	note: 'tv shows & movies, live from my tracker + anilist',
+	note: 'tv shows & movies, from my tracker + anilist',
 	limit: 8,
 };
 
 export const reading = {
 	title: 'reading now',
-	note: 'manga, live from anilist',
+	note: 'manga, from anilist',
 	limit: 8,
 };

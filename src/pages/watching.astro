@@ -62,28 +62,14 @@ const statuses = [
 
   initThemeToggle();
 
-  const REFRESH_MS = 30_000;
-  const TRACKER_EVERY = 4;
-
-  let tick = 0;
-  let trackerCache: Entry[] = [];
-  let anilistCache: Entry[] = [];
-
   mountListPage({
-    refreshMs: REFRESH_MS,
     load: async () => {
-      const withTracker = tick % TRACKER_EVERY === 0;
-      tick += 1;
-
       const [tracker, anilist] = await Promise.all([
-        withTracker ? fetchAll().catch(() => trackerCache) : trackerCache,
-        fetchAniList({ force: true }).catch(() => null),
+        fetchAll().catch(() => [] as Entry[]),
+        fetchAniList().catch(() => null),
       ]);
 
-      if (withTracker) trackerCache = tracker;
-      if (anilist) anilistCache = anilist.anime;
-
-      return sortWatchlist(mergeUnique(trackerCache, anilistCache));
+      return sortWatchlist(mergeUnique(tracker, anilist?.anime ?? []));
     },
     errorMessage: 'could not load the watchlist',
   });

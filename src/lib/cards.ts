@@ -1,8 +1,3 @@
-/**
- * Shared card rendering for watchlist cards on both
- * the main page and the /watching page.
- */
-
 export type Entry = {
   title: string;
   image: string | null;
@@ -43,12 +38,6 @@ function formatDate(raw: string | null): string | null {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-/**
- * Create a watchlist card.
- *
- * @param mode  'scroller' — horizontal scroll (main page)
- *              'grid'     — responsive grid (watching page)
- */
 export function createCard(
   entry: Entry,
   mode: 'scroller' | 'grid' = 'scroller',
@@ -166,13 +155,6 @@ function entryTime(entry: Entry): number {
   return Number.isNaN(t) ? 0 : t;
 }
 
-/**
- * Carousel order: in progress and paused always first, the rest sorted by
- * recency with finished titles counting as COMPLETED_FRESH days newer — so
- * planning added today floats above a series finished a month ago, while
- * older completed ones stay near the top instead of sinking under hundreds
- * of backlog planning entries. Recency inside a group, title as tiebreak.
- */
 const FIXED_RANK: Record<string, number> = {
   'In progress': 0,
   Paused: 1,

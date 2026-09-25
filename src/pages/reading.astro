@@ -56,19 +56,15 @@ const statuses = [
 <script>
   import { initThemeToggle } from '../lib/icons';
   import { mountListPage } from '../lib/listPage';
-  import { sortWatchlist, type Entry } from '../lib/cards';
+  import { sortWatchlist } from '../lib/cards';
   import { fetchAniList } from '../lib/anilist';
 
   initThemeToggle();
 
-  let mangaCache: Entry[] = [];
-
   mountListPage({
-    refreshMs: 30_000,
     load: async () => {
-      const anilist = await fetchAniList({ force: true }).catch(() => null);
-      if (anilist) mangaCache = anilist.manga;
-      return sortWatchlist(mangaCache);
+      const anilist = await fetchAniList().catch(() => null);
+      return sortWatchlist(anilist?.manga ?? []);
     },
     errorMessage: 'could not load the reading list',
   });

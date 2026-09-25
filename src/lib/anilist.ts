@@ -1,11 +1,3 @@
-/**
- * Client-side AniList helpers.
- *
- * Talks to the Vercel proxy (`api/anilist.ts`) through the shared API
- * origin in `src/lib/api.ts`. The response is fetched once per page load
- * and reused everywhere.
- */
-
 import type { Entry } from './cards';
 import { apiUrl } from './api';
 
@@ -61,7 +53,6 @@ function toEntry(raw: AniListRawEntry): Entry {
   };
 }
 
-/** Normalize a title for cross-source deduplication. */
 export function normalizeTitle(title: string): string {
   return title
     .toLowerCase()
@@ -69,11 +60,6 @@ export function normalizeTitle(title: string): string {
     .replace(/[^\p{L}\p{N}]+/gu, '');
 }
 
-/**
- * Drop entries from `extra` whose title already appears in `primary`.
- * Used to skip AniList anime that Yamtrack already tracks (ids are not
- * comparable across sources).
- */
 export function mergeUnique(primary: Entry[], extra: Entry[]): Entry[] {
   const seen = new Set(primary.map((e) => normalizeTitle(e.title)));
   const out = [...primary];
@@ -88,12 +74,8 @@ export function mergeUnique(primary: Entry[], extra: Entry[]): Entry[] {
 
 let inflight: Promise<AniListBundle> | null = null;
 
-/**
- * Fetch both lists from the proxy. Memoized per page load; pass
- * `force: true` from the live-refresh timer to bypass the memo.
- */
-export function fetchAniList(options: { force?: boolean } = {}): Promise<AniListBundle> {
-  if (!options.force && inflight) return inflight;
+export function fetchAniList(): Promise<AniListBundle> {
+  if (inflight) return inflight;
 
   const request = (async () => {
     const res = await fetch(baseUrl(), {

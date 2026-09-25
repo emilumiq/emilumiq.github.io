@@ -167,27 +167,46 @@ function entryTime(entry: Entry): number {
 }
 
 /**
- * Carousel order: in progress and paused first (newest first), everything
- * else — planning, completed, dropped — blended by recency, so a planning
- * added last week sits above a series finished years ago and a recently
- * dropped title is not buried under old completed ones. Falls back to the
- * title inside a group.
+ * Carousel order: in progress and paused always first, the rest sorted by
+ * recency with finished titles counting as COMPLETED_FRESH days newer — so
+ * planning added today floats above a series finished a month ago, while
+ * older completed ones stay near the top instead of sinking under hundreds
+ * of backlog planning entries. Recency inside a group, title as tiebreak.
  */
 const FIXED_RANK: Record<string, number> = {
   'In progress': 0,
   Paused: 1,
 };
 
-export function sortWatchlist(entries: Entry[]): Entry[] {
-  return [...entries].sort((a, b) => {
-    const ar = FIXED_RANK[a.status ?? ''] ?? 2;
-    const br = FIXED_RANK[b.status ?? ''] ?? 2;
-    if (ar !== br) return ar - br;
+const COMPLETED_FRESH = 21 * 24 * 60 * 60 * 1000;
 
+export function sortWatchlist(entries: Entry[]): Entry[] {
+  const now = Date.now();
+  const fixedOf = (e: Entry): number => FIXED_RANK[e.status ?? ''] ?? -1;
+  const ageOf = (e: Entry): number => {
+    const t = entryTime(e);
+    return t > 0 ? now - t : Number.MAX_SAFE_INTEGER;
+  };
+  const byTimeThenTitle = (a: Entry, b: Entry): number => {
     const at = entryTime(a);
     const bt = entryTime(b);
     if (at !== bt) return bt - at;
+    return a.title.localeCompare(b.title);
+  };
 
+  return [...entries].sort((a, b) => {
+    const af = fixedOf(a);
+    const bf = fixedOf(b);
+    if (af !== bf) {
+      const ar = af < 0 ? Number.MAX_SAFE_INTEGER : af;
+      const br = bf < 0 ? Number.MAX_SAFE_INTEGER : bf;
+      return ar - br;
+    }
+    if (af >= 0) return byTimeThenTitle(a, b);
+
+    const ka = ageOf(a) - (a.status === 'Completed' ? COMPLETED_FRESH : 0);
+    const kb = ageOf(b) - (b.status === 'Completed' ? COMPLETED_FRESH : 0);
+    if (ka !== kb) return ka - kb;
     return a.title.localeCompare(b.title);
   });
 }

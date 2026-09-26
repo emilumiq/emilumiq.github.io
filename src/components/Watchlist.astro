@@ -119,16 +119,16 @@ const skeleton = { base: 'aspect-[2/3] bg-surface', title: 'mt-2 h-3.5 w-3/4 bg-
   const watching = setupScroller('watchlist-grid', 'scroll-left', 'scroll-right');
   const readingScroller = setupScroller('reading-grid', 'reading-scroll-left', 'reading-scroll-right');
 
-  void Promise.all([fetchAll().catch(() => null), fetchAniList().catch(() => null)]).then(
-    ([tracker, anilist]) => {
-      if (!tracker && !anilist) {
+  void Promise.all([fetchAniList().catch(() => null), fetchAll().catch(() => null)]).then(
+    ([anilist, tracker]) => {
+      if (!anilist && !tracker) {
         watching.render([], watchlist.limit, 'could not load the watchlist');
         readingScroller.render([], reading.limit, 'could not load the reading list');
         return;
       }
 
       watching.render(
-        sortWatchlist(mergeUnique(tracker ?? [], anilist?.anime ?? [])),
+        sortWatchlist(mergeUnique(anilist?.anime ?? [], tracker ?? [])),
         watchlist.limit,
         'nothing here right now',
       );

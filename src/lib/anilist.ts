@@ -50,8 +50,6 @@ function toEntry(raw: AniListRawEntry): Entry {
     status,
     progress: raw.progress,
     max_progress: raw.maxProgress,
-    // Finished titles carry their real completion date; for everything else
-    // the record's last-update time is the meaningful one.
     progressed_at: status === 'Completed' ? raw.completedAt : raw.updatedAt,
     url: raw.url,
   };

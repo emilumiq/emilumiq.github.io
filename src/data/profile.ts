@@ -62,7 +62,7 @@ export const projects: {
 
 export const watchlist = {
 	title: 'watching now',
-	note: 'tv shows & movies, from my tracker + anilist',
+	note: 'anime from anilist, series & movies from my tracker',
 	limit: 8,
 };
 

@@ -64,12 +64,12 @@ const statuses = [
 
   mountListPage({
     load: async () => {
-      const [tracker, anilist] = await Promise.all([
-        fetchAll().catch(() => [] as Entry[]),
+      const [anilist, tracker] = await Promise.all([
         fetchAniList().catch(() => null),
+        fetchAll().catch(() => [] as Entry[]),
       ]);
 
-      return sortWatchlist(mergeUnique(tracker, anilist?.anime ?? []));
+      return sortWatchlist(mergeUnique(anilist?.anime ?? [], tracker));
     },
     errorMessage: 'could not load the watchlist',
   });

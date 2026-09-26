@@ -50,7 +50,6 @@ export function createCard(
     ? 'group block shrink-0 w-28 sm:w-36'
     : 'group block';
 
-  // Poster
   const poster = document.createElement('div');
   poster.className = 'relative aspect-[2/3] overflow-hidden bg-surface border border-line';
 
@@ -71,7 +70,6 @@ export function createCard(
   const progress = entry.progress ?? 0;
   const maxProg = entry.max_progress;
 
-  // Score badge (only the user's own score) — bottom-left dark chip
   if (entry.score != null && entry.score > 0) {
     const chip = document.createElement('div');
     chip.className = 'absolute bottom-1.5 left-1.5 z-10 rounded-sm bg-black/60 px-1.5 py-0.5 text-[11px] font-medium text-white shadow-[0_1px_4px_rgba(0,0,0,0.7)]';
@@ -79,7 +77,6 @@ export function createCard(
     poster.append(chip);
   }
 
-  // Progress count — bottom-right with gradient
   if (progress > 0 && entry.media_type !== 'movie') {
     const hasMax = maxProg != null && maxProg > 0;
 
@@ -96,16 +93,12 @@ export function createCard(
     poster.append(gradient);
   }
 
-  // Info block
   const info = document.createElement('div');
   info.className = 'mt-1.5 px-0.5';
 
-  // Title
   const title = document.createElement('p');
   title.className = 'text-base font-medium text-foreground group-hover:text-accent transition-colors leading-snug line-clamp-2';
   title.textContent = entry.title;
-
-  // Subtitle: status dot + type + date
   const sub = document.createElement('p');
   sub.className = 'mt-0.5 text-sm text-muted flex items-center justify-between gap-1';
 
@@ -155,35 +148,45 @@ function entryTime(entry: Entry): number {
   return Number.isNaN(t) ? 0 : t;
 }
 
-/**
- * Carousel order: in progress and paused first, then everything from the
- * last RECENT_WINDOW days by recency (so freshly added planning sits above
- * old finished titles), then older completed entries by their real finish
- * date — entries without one close that block, sorted by title — and the
- * remaining backlog last, again newest first.
- */
-const RECENT_WINDOW = 7 * 24 * 60 * 60 * 1000;
+const PLANNING_HEAD = 12;
+const FRESH_WINDOW = 14 * 24 * 60 * 60 * 1000;
 
 export function sortWatchlist(entries: Entry[]): Entry[] {
   const now = Date.now();
-  const prepared = entries.map((entry) => {
+  const byDate = (a: Entry, b: Entry): number =>
+    entryTime(b) - entryTime(a) || a.title.localeCompare(b.title);
+
+  const active: Entry[] = [];
+  const freshCompleted: Entry[] = [];
+  const mid: Entry[] = [];
+  const backlog: Entry[] = [];
+
+  for (const entry of entries) {
     const status = entry.status ?? '';
     const time = entryTime(entry);
 
-    let zone: number;
-    if (status === 'In progress' || status === 'Paused') zone = 0;
-    else if (time > 0 && now - time < RECENT_WINDOW) zone = 1;
-    else if (status === 'Completed') zone = 2;
-    else zone = 3;
+    if (status === 'In progress' || status === 'Paused') {
+      active.push(entry);
+    } else if (status === 'Completed') {
+      if (time > 0 && now - time < FRESH_WINDOW) freshCompleted.push(entry);
+      else mid.push(entry);
+    } else if (status === 'Dropped') {
+      mid.push(entry);
+    } else {
+      backlog.push(entry);
+    }
+  }
 
-    return { entry, zone, time };
-  });
+  active.sort(byDate);
+  freshCompleted.sort(byDate);
+  mid.sort(byDate);
+  backlog.sort(byDate);
 
-  prepared.sort(
-    (a, b) =>
-      a.zone - b.zone ||
-      b.time - a.time ||
-      a.entry.title.localeCompare(b.entry.title),
-  );
-  return prepared.map((p) => p.entry);
+  return [
+    ...active,
+    ...freshCompleted,
+    ...backlog.slice(0, PLANNING_HEAD),
+    ...mid,
+    ...backlog.slice(PLANNING_HEAD),
+  ];
 }

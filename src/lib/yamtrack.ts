@@ -216,7 +216,7 @@ export function createWatchlistLoader(status = '', pageSize = PAGE_SIZE) {
  * fetched once and reused across all status tabs (filtered client-side).
  */
 export async function fetchAll(): Promise<YamtrackEntry[]> {
-  const types = ['tv', 'movie', 'anime'] as const;
+  const types = ['tv', 'movie'] as const;
   const pages = await Promise.all(
     types.map((t) => fetchAllPages(t)),
   );

@@ -14,6 +14,7 @@ export type AniListRawEntry = {
   maxProgress: number | null;
   score: number | null;
   updatedAt: string | null;
+  completedAt: string | null;
   cover: string | null;
   color: string | null;
   url: string;
@@ -40,15 +41,18 @@ function baseUrl(): string {
 }
 
 function toEntry(raw: AniListRawEntry): Entry {
+  const status = STATUS_MAP[raw.status] ?? null;
   return {
     title: raw.title,
     image: raw.cover,
     media_type: raw.type === 'MANGA' ? 'manga' : 'anime',
     score: raw.score,
-    status: STATUS_MAP[raw.status] ?? null,
+    status,
     progress: raw.progress,
     max_progress: raw.maxProgress,
-    progressed_at: raw.updatedAt,
+    // Finished titles carry their real completion date; for everything else
+    // the record's last-update time is the meaningful one.
+    progressed_at: status === 'Completed' ? raw.completedAt : raw.updatedAt,
     url: raw.url,
   };
 }

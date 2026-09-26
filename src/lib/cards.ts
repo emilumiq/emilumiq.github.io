@@ -155,40 +155,35 @@ function entryTime(entry: Entry): number {
   return Number.isNaN(t) ? 0 : t;
 }
 
-const FIXED_RANK: Record<string, number> = {
-  'In progress': 0,
-  Paused: 1,
-};
-
-const COMPLETED_FRESH = 21 * 24 * 60 * 60 * 1000;
+/**
+ * Carousel order: in progress and paused first, then everything from the
+ * last RECENT_WINDOW days by recency (so freshly added planning sits above
+ * old finished titles), then older completed entries by their real finish
+ * date — entries without one close that block, sorted by title — and the
+ * remaining backlog last, again newest first.
+ */
+const RECENT_WINDOW = 7 * 24 * 60 * 60 * 1000;
 
 export function sortWatchlist(entries: Entry[]): Entry[] {
   const now = Date.now();
-  const fixedOf = (e: Entry): number => FIXED_RANK[e.status ?? ''] ?? -1;
-  const ageOf = (e: Entry): number => {
-    const t = entryTime(e);
-    return t > 0 ? now - t : Number.MAX_SAFE_INTEGER;
-  };
-  const byTimeThenTitle = (a: Entry, b: Entry): number => {
-    const at = entryTime(a);
-    const bt = entryTime(b);
-    if (at !== bt) return bt - at;
-    return a.title.localeCompare(b.title);
-  };
+  const prepared = entries.map((entry) => {
+    const status = entry.status ?? '';
+    const time = entryTime(entry);
 
-  return [...entries].sort((a, b) => {
-    const af = fixedOf(a);
-    const bf = fixedOf(b);
-    if (af !== bf) {
-      const ar = af < 0 ? Number.MAX_SAFE_INTEGER : af;
-      const br = bf < 0 ? Number.MAX_SAFE_INTEGER : bf;
-      return ar - br;
-    }
-    if (af >= 0) return byTimeThenTitle(a, b);
+    let zone: number;
+    if (status === 'In progress' || status === 'Paused') zone = 0;
+    else if (time > 0 && now - time < RECENT_WINDOW) zone = 1;
+    else if (status === 'Completed') zone = 2;
+    else zone = 3;
 
-    const ka = ageOf(a) - (a.status === 'Completed' ? COMPLETED_FRESH : 0);
-    const kb = ageOf(b) - (b.status === 'Completed' ? COMPLETED_FRESH : 0);
-    if (ka !== kb) return ka - kb;
-    return a.title.localeCompare(b.title);
+    return { entry, zone, time };
   });
+
+  prepared.sort(
+    (a, b) =>
+      a.zone - b.zone ||
+      b.time - a.time ||
+      a.entry.title.localeCompare(b.entry.title),
+  );
+  return prepared.map((p) => p.entry);
 }

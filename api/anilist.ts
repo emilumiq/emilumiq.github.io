@@ -32,6 +32,7 @@ fragment entryFields on MediaList {
   progress
   score
   updatedAt
+  completedAt { year month day }
   media {
     id
     type
@@ -68,6 +69,8 @@ export type AniListEntry = {
   maxProgress: number | null;
   score: number | null;
   updatedAt: string | null;
+  /** Real "finished on" date from AniList; null when the user never set one. */
+  completedAt: string | null;
   cover: string | null;
   color: string | null;
   url: string;
@@ -91,6 +94,7 @@ type RawEntry = {
   progress?: number | null;
   score?: number | null;
   updatedAt?: number | null;
+  completedAt?: { year?: number | null; month?: number | null; day?: number | null } | null;
   media?: RawMedia | null;
 };
 
@@ -125,6 +129,12 @@ function normalizeScore(score: number | null | undefined): number | null {
   return Math.round(scaled * 10) / 10;
 }
 
+/** Full completion date only — a missing month/day counts as "no date". */
+function fuzzyDate(raw: RawEntry['completedAt']): string | null {
+  if (!raw?.year || !raw.month || !raw.day) return null;
+  return new Date(Date.UTC(raw.year, raw.month - 1, raw.day)).toISOString();
+}
+
 function mapEntry(entry: RawEntry, listName: string): AniListEntry | null {
   const media = entry.media;
   if (!media?.id) return null;
@@ -156,6 +166,7 @@ function mapEntry(entry: RawEntry, listName: string): AniListEntry | null {
     maxProgress,
     score: normalizeScore(entry.score),
     updatedAt,
+    completedAt: fuzzyDate(entry.completedAt),
     cover: media.coverImage?.extraLarge || media.coverImage?.large || null,
     color: media.coverImage?.color ?? null,
     url: media.siteUrl ?? `https://anilist.co/${type.toLowerCase()}/${media.id}`,

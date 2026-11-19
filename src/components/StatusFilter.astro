@@ -1,0 +1,44 @@
+---
+import Icon from './Icon.astro';
+
+interface Props {
+  statuses: { value: string; label: string }[];
+}
+
+const { statuses } = Astro.props;
+---
+
+<div class="relative" data-status-filter>
+  <button
+    type="button"
+    data-menu-button
+    aria-haspopup="menu"
+    aria-expanded="false"
+    class="inline-flex min-h-9 items-center gap-1.5 rounded-sm px-1.5 py-1 text-meta font-semibold text-accent transition-colors hover:bg-surface-hover max-lg:min-h-11"
+  >
+    <Icon name="filter" class="h-3.5 w-3.5 shrink-0" />
+    <span data-status-label>{statuses[0]?.label}</span>
+    <Icon name="chevron-down" class="h-3 w-3 shrink-0" />
+  </button>
+
+  <div
+    data-menu-panel
+    role="menu"
+    popover="manual"
+    class="fixed inset-auto m-0 w-44 flex-col overflow-hidden rounded-md border border-line bg-elevated p-1 shadow-small [&:popover-open]:flex"
+  >
+    {statuses.map((s, i) => (
+      <button
+        type="button"
+        role="menuitem"
+        data-value={s.value}
+        data-label={s.label}
+        aria-current={i === 0 ? 'true' : 'false'}
+        class="flex items-center justify-between gap-2 rounded-sm px-2.5 py-1.5 text-ui font-medium text-muted transition-colors hover:bg-surface-hover hover:text-ink aria-[current=true]:text-ink [&[aria-current=true]_[data-check]]:opacity-100"
+      >
+        {s.label}
+        <span data-check class="opacity-0 transition-opacity"><Icon name="check" class="h-3.5 w-3.5 shrink-0 text-accent" /></span>
+      </button>
+    ))}
+  </div>
+</div>

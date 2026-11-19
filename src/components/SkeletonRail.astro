@@ -1,0 +1,24 @@
+---
+import Rail from './Rail.astro';
+
+interface Props {
+  id: string;
+  label: string;
+  count?: number;
+  wide?: boolean;
+}
+
+const { id, label, count = 8, wide = false } = Astro.props;
+---
+
+<Rail id={id} label={label} wide={wide}>
+  {
+    Array.from({ length: count }, () => (
+      <li aria-hidden="true">
+        <div class="aspect-[5/7] w-full animate-pulse rounded-poster bg-skeleton" />
+        <div class="mt-2 h-3.5 w-4/5 animate-pulse rounded-sm bg-skeleton" />
+        <div class="mt-1.5 h-3 w-1/2 animate-pulse rounded-sm bg-skeleton" />
+      </li>
+    ))
+  }
+</Rail>

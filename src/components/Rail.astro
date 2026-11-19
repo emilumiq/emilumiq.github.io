@@ -1,0 +1,65 @@
+---
+import Icon from './Icon.astro';
+
+interface Props {
+  id: string;
+  label: string;
+  wide?: boolean;
+}
+
+const { id, label, wide = false } = Astro.props;
+
+const liWidth = wide
+  ? '[&>li]:w-[128px] sm:[&>li]:w-[140px]'
+  : '[&>li]:w-[108px] sm:[&>li]:w-[120px]';
+
+const arrow =
+  'absolute top-1/2 z-20 flex h-[51px] w-[35px] -translate-y-[calc(50%+31px)] items-center justify-center rounded-[15px] bg-elevated/90 text-accent opacity-0 shadow-small transition-[opacity,background-color] duration-200 group-hover/carousel:opacity-100 focus-visible:opacity-100 hover:bg-elevated [&[hidden]]:hidden';
+---
+
+<div class="group/carousel relative mt-1" data-carousel>
+  <button
+    class={`${arrow} left-0`}
+    type="button"
+    data-carousel-prev
+    aria-label={`Scroll ${label} left`}
+    hidden
+  >
+    <Icon name="arrow-left" class="h-5 w-5" />
+  </button>
+  <ul
+    id={id}
+    class:list={[
+      '-mx-4 flex gap-3 overflow-x-auto scroll-smooth py-1 pl-4 [scrollbar-width:none] [scroll-padding-inline:1rem] [scroll-snap-type:x_mandatory] [&::-webkit-scrollbar]:hidden [&>li]:shrink-0 [&>li]:snap-start [&::after]:block [&::after]:w-1 [&::after]:shrink-0 [&::after]:content-[""]',
+      liWidth,
+    ]}
+    data-carousel-track
+  >
+    <slot />
+  </ul>
+  <button
+    class={`${arrow} right-0`}
+    type="button"
+    data-carousel-next
+    aria-label={`Scroll ${label} right`}
+    hidden
+  >
+    <Icon name="arrow-right" class="h-5 w-5" />
+  </button>
+</div>
+
+<script>
+  for (const root of document.querySelectorAll<HTMLElement>('[data-carousel]')) {
+    const track = root.querySelector<HTMLElement>('[data-carousel-track]')!;
+    const prev = root.querySelector<HTMLButtonElement>('[data-carousel-prev]')!;
+    const next = root.querySelector<HTMLButtonElement>('[data-carousel-next]')!;
+    const update = () => {
+      prev.hidden = track.scrollLeft <= 0;
+      next.hidden = track.scrollLeft >= track.scrollWidth - track.clientWidth - 2;
+    };
+    prev.addEventListener('click', () => track.scrollBy({ left: -track.clientWidth * 0.8 }));
+    next.addEventListener('click', () => track.scrollBy({ left: track.clientWidth * 0.8 }));
+    track.addEventListener('scroll', update, { passive: true });
+    update();
+  }
+</script>

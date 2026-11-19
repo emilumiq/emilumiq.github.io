@@ -3,7 +3,6 @@ export const profile = {
 	emoji: '🌺🐚',
 	intro: [
 		"Hi! I'm Emily Aoi",
-		"I occasionally do releases on various torrent trackers (mostly RuTracker).",
 		"I also maintain a few projects of my own:",
 		"In my free time I watch anime, tv shows, cartoons, movies and more.",
 	],
@@ -60,12 +59,10 @@ export const projects: {
 
 export const watchlist = {
 	title: 'watching now',
-	note: 'anime, from anilist',
 	limit: 8,
 };
 
 export const reading = {
 	title: 'reading now',
-	note: 'manga, from anilist',
 	limit: 8,
 };

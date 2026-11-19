@@ -28,3 +28,6 @@ result
 
 # Local Netlify folder
 .netlify
+
+# Serena MCP project config
+.serena/

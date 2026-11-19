@@ -21,17 +21,23 @@ const TYPE_LABELS: Record<string, string> = {
   book: 'book',
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  'In progress': 'bg-[var(--status-current)]',
-  Completed: 'bg-accent',
-  Planning: 'bg-[var(--status-planning)]',
-  Paused: 'bg-[var(--status-paused)]',
-  Dropped: 'bg-[var(--status-dropped)]',
-};
-
 const PROGRESS_UNITS: Record<string, string> = {
   manga: 'ch',
 };
+
+const STATUS_TEXT: Record<string, string> = {
+  'In progress': 'text-[var(--status-current)]',
+  Completed: 'text-accent',
+  Planning: 'text-[var(--status-planning)]',
+  Paused: 'text-[var(--status-paused)]',
+  Dropped: 'text-[var(--status-dropped)]',
+};
+
+function statusLabel(entry: Entry): string | null {
+  if (!entry.status) return null;
+  if (entry.status === 'In progress') return entry.media_type === 'manga' ? 'reading' : 'watching';
+  return entry.status.toLowerCase();
+}
 
 function formatDate(raw: string | null): string | null {
   if (!raw) return null;
@@ -40,113 +46,113 @@ function formatDate(raw: string | null): string | null {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-export function createCard(
-  entry: Entry,
-  mode: 'scroller' | 'grid' = 'scroller',
-): HTMLAnchorElement {
+export function createCard(entry: Entry): HTMLLIElement {
+  const li = document.createElement('li');
+  li.className = 'group/card relative min-w-0';
+
+  const poster = document.createElement('div');
+  poster.className = 'relative overflow-hidden rounded-poster bg-skeleton';
+
   const a = document.createElement('a');
+  a.className = 'block';
   a.href = entry.url;
   a.target = '_blank';
   a.rel = 'noopener noreferrer';
-  a.className = mode === 'scroller'
-    ? 'group block shrink-0 w-28 sm:w-36'
-    : 'group block';
-
-  const poster = document.createElement('div');
-  poster.className = 'relative aspect-[2/3] overflow-hidden bg-surface border border-line';
 
   if (entry.image) {
     const img = document.createElement('img');
     img.src = entry.image;
     img.alt = entry.title;
     img.loading = 'lazy';
-    img.className = 'h-full w-full object-cover transition duration-300 group-hover:opacity-80';
-    poster.append(img);
+    img.width = 200;
+    img.height = 280;
+    img.className = 'aspect-[5/7] w-full object-cover transition-opacity group-hover/card:opacity-90';
+    a.append(img);
   } else {
     const placeholder = document.createElement('div');
-    placeholder.className = 'h-full w-full bg-line flex items-center justify-center text-muted text-xs';
+    placeholder.className = 'grid aspect-[5/7] w-full place-items-center text-caption text-faint';
     placeholder.textContent = TYPE_LABELS[entry.media_type] ?? entry.media_type;
-    poster.append(placeholder);
+    a.append(placeholder);
   }
 
   const progress = entry.progress ?? 0;
   const maxProg = entry.max_progress;
+  const hasMax = maxProg != null && maxProg > 0;
 
   if (entry.score != null && entry.score > 0) {
-    const chip = document.createElement('div');
-    chip.className = 'absolute bottom-1.5 left-1.5 z-10 rounded-sm bg-black/60 px-1.5 py-0.5 text-[11px] font-medium text-white shadow-[0_1px_4px_rgba(0,0,0,0.7)]';
-    chip.textContent = entry.score % 1 === 0 ? `${entry.score}` : entry.score.toFixed(1);
-    poster.append(chip);
+    const badge = document.createElement('span');
+    badge.className = 'absolute top-1.5 left-1.5 inline-flex items-center gap-1 rounded-sm bg-accent px-1.5 py-0.5 font-display text-caption font-semibold text-on-accent';
+    const star = document.createElement('span');
+    star.setAttribute('aria-hidden', 'true');
+    star.textContent = '★';
+    const value = document.createElement('span');
+    value.textContent = entry.score % 1 === 0 ? `${entry.score}` : entry.score.toFixed(1);
+    const srScore = document.createElement('span');
+    srScore.className = 'sr-only';
+    srScore.textContent = 'score ';
+    badge.append(star, srScore, value);
+    a.append(badge);
   }
 
   if (progress > 0 && entry.media_type !== 'movie') {
-    const hasMax = maxProg != null && maxProg > 0;
-
-    const gradient = document.createElement('div');
-    gradient.className = 'absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black/70 to-transparent';
-
-    const count = document.createElement('span');
-    count.className = 'absolute bottom-1 right-2 text-[11px] font-semibold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]';
-    count.textContent = hasMax
+    const badge = document.createElement('span');
+    badge.className = 'absolute top-1.5 right-1.5 rounded-sm bg-black/60 px-1.5 py-0.5 font-display text-caption font-medium text-white';
+    badge.textContent = hasMax
       ? `${progress}/${maxProg}`
       : `${progress} ${PROGRESS_UNITS[entry.media_type] ?? 'ep'}`;
-
-    gradient.append(count);
-    poster.append(gradient);
+    a.append(badge);
   }
 
-  const info = document.createElement('div');
-  info.className = 'mt-1.5 px-0.5';
+  poster.append(a);
 
-  const title = document.createElement('p');
-  title.className = 'text-base font-medium text-foreground group-hover:text-accent transition-colors leading-snug line-clamp-2';
-  title.textContent = entry.title;
-  const sub = document.createElement('p');
-  sub.className = 'mt-0.5 text-sm text-muted flex items-center justify-between gap-1';
+  const title = document.createElement('a');
+  title.className = 'mt-1.5 block font-display text-ui leading-[1.3] font-medium text-ink transition-colors hover:text-accent-strong';
+  title.href = entry.url;
+  title.target = '_blank';
+  title.rel = 'noopener noreferrer';
+  const titleText = document.createElement('span');
+  titleText.className = 'line-clamp-2';
+  titleText.textContent = entry.title;
+  title.append(titleText);
 
-  const subLeft = document.createElement('span');
+  li.append(poster, title);
 
-  const statusColor = entry.status ? STATUS_COLORS[entry.status] : null;
-  if (statusColor) {
-    const dot = document.createElement('span');
-    dot.className = `inline-block h-1.5 w-1.5 rounded-full align-middle mr-1 ${statusColor}`;
-    dot.title = entry.status!;
-    const srStatus = document.createElement('span');
-    srStatus.className = 'sr-only';
-    srStatus.textContent = `${entry.status}: `;
-    subLeft.append(dot, srStatus);
+  const caption = document.createElement('p');
+  caption.className = 'mt-0.5 truncate text-caption text-faint';
+
+  let first = true;
+  const add = (node: Node) => {
+    if (!first) caption.append(document.createTextNode(' · '));
+    caption.append(node);
+    first = false;
+  };
+
+  const label = statusLabel(entry);
+  if (label) {
+    const status = document.createElement('span');
+    status.className = `font-medium ${STATUS_TEXT[entry.status!] ?? ''}`;
+    status.textContent = label;
+    add(status);
   }
-
-  subLeft.append(document.createTextNode(TYPE_LABELS[entry.media_type] ?? entry.media_type));
-
   const dateStr = formatDate(entry.progressed_at);
+  if (dateStr) add(document.createTextNode(dateStr));
 
-  sub.append(subLeft);
-
-  if (dateStr) {
-    const date = document.createElement('span');
-    date.className = 'text-xs text-muted';
-    date.textContent = dateStr;
-    sub.append(date);
-  }
-
-  info.append(title, sub);
-  a.append(poster, info);
-  return a;
+  if (!first) li.append(caption);
+  return li;
 }
 
 export function showFallback(container: HTMLElement, message: string, onRetry?: () => void) {
   container.replaceChildren();
-  const box = document.createElement('div');
+  const box = document.createElement(container.tagName === 'UL' ? 'li' : 'div');
   box.className = 'col-span-full w-full px-5 py-8 text-center';
   const p = document.createElement('p');
-  p.className = 'text-sm text-muted';
+  p.className = 'text-meta text-muted';
   p.textContent = message;
   box.append(p);
   if (onRetry) {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'mt-3 inline-flex min-h-[44px] items-center gap-1.5 px-3 text-sm font-medium text-accent hover:text-accent-strong';
+    btn.className = 'mt-3 inline-flex min-h-11 items-center gap-1.5 px-3 text-meta font-medium text-accent transition-colors hover:text-accent-strong';
     btn.innerHTML = `${RELOAD_SVG}<span>retry</span>`;
     btn.addEventListener('click', onRetry);
     box.append(btn);

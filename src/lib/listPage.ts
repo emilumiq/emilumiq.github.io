@@ -1,4 +1,5 @@
 import { createCard, showFallback, type Entry } from './cards';
+import { attachMenu } from './popover';
 
 export type ListPageOptions = {
   load: () => Promise<Entry[]>;
@@ -13,29 +14,32 @@ export function mountListPage({
 }: ListPageOptions): void {
   const grid = document.getElementById('list-grid');
   const statusEl = document.getElementById('list-status');
-  if (!grid || !statusEl) return;
+  const filterRoot = document.querySelector<HTMLElement>('[data-status-filter]');
+  if (!grid || !statusEl || !filterRoot) return;
 
-  const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('.status-tab'));
+  const label = filterRoot.querySelector<HTMLElement>('[data-status-label]');
+  const menuItems = Array.from(filterRoot.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'));
+  attachMenu(filterRoot);
+
   let all: Entry[] = [];
   let current = '';
 
-  const setTabStyles = () => {
-    for (const btn of tabs) {
-      const active = (btn.dataset.status ?? '') === current;
-      const empty = btn.classList.contains('is-empty');
-      btn.className = `status-tab text-sm font-medium ${
-        active ? 'status-tab-active' : 'status-tab-inactive'
-      }${empty ? ' is-empty' : ''}`;
+  const setCurrent = (value: string) => {
+    current = value;
+    const item = menuItems.find((i) => (i.dataset.value ?? '') === value);
+    if (label && item) label.textContent = item.dataset.label ?? '';
+    for (const i of menuItems) {
+      i.setAttribute('aria-current', String((i.dataset.value ?? '') === value));
     }
   };
 
-  const hideEmptyTabs = () => {
+  const syncOptions = () => {
     const present = new Set(all.map((e) => e.status ?? ''));
-    for (const btn of tabs) {
-      const status = btn.dataset.status ?? '';
-      if (status && !present.has(status)) btn.classList.add('is-empty');
-      else btn.classList.remove('is-empty');
+    for (const item of menuItems) {
+      const value = item.dataset.value ?? '';
+      item.hidden = !!value && !present.has(value);
     }
+    if (current && !present.has(current)) setCurrent('');
   };
 
   const render = () => {
@@ -43,28 +47,23 @@ export function mountListPage({
     if (filtered.length === 0) {
       showFallback(grid, all.length === 0 ? errorMessage : emptyMessage);
     } else {
-      grid.replaceChildren(...filtered.map((e) => createCard(e, 'grid')));
+      grid.replaceChildren(...filtered.map((e) => createCard(e)));
     }
     statusEl.textContent = filtered.length ? `${filtered.length}` : '';
   };
 
   const apply = (items: Entry[]) => {
     all = items;
-    hideEmptyTabs();
+    syncOptions();
     render();
   };
 
-  for (const btn of tabs) {
-    btn.addEventListener('click', () => {
-      const next = btn.dataset.status ?? '';
-      if (next === current) return;
-      current = next;
-      setTabStyles();
+  for (const item of menuItems) {
+    item.addEventListener('click', () => {
+      setCurrent(item.dataset.value ?? '');
       render();
     });
   }
-
-  setTabStyles();
 
   const attempt = () => {
     statusEl.textContent = 'loading…';

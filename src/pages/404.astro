@@ -1,34 +1,65 @@
 ---
+import { Image } from 'astro:assets';
+import img404 from '../assets/404.jpeg';
 import Base from '../layouts/Base.astro';
+import ThemeToggle from '../components/ThemeToggle.astro';
 import Footer from '../components/Footer.astro';
+import Icon from '../components/Icon.astro';
 ---
 
 <Base title="404 ~ nowhere to be found" description="oops, this page doesn't exist :3">
-  <div class="flex min-h-screen flex-col">
-    <main class="mx-auto flex w-full max-w-xl flex-1 flex-col items-center justify-center px-6 pt-16 pb-6 text-center">
-      <p class="mb-4 font-mono text-sm text-muted">404 · file not found</p>
-
-      <img
-        src="/404.jpeg"
-        alt="madoka says 404 file not found"
-        width="500"
-        height="375"
-        class="w-full max-w-md rounded-2xl border border-line object-cover shadow-lg"
-        loading="eager"
-        fetchpriority="high"
-      />
-
-      <h1 class="mt-6 text-3xl font-bold text-foreground">oops, nowhere to be found :3</h1>
-      <p class="mt-2 text-muted">this page doesn't exist. let's get you back home</p>
-
-      <a
-        href="/"
-        class="btn-accent mt-6 inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-base font-medium"
-      >
-        ← back home
-      </a>
-    </main>
-
-    <Footer />
+  <div class="mx-auto flex w-full max-w-page justify-end px-4 pt-2">
+    <ThemeToggle />
   </div>
+  <main class="mx-auto flex w-full max-w-xl flex-1 flex-col items-center justify-center px-4 py-16 text-center">
+    <p class="mb-4 text-meta text-faint">404 · file not found</p>
+    <Image
+      src={img404}
+      alt="madoka says 404 file not found"
+      width={500}
+      height={375}
+      class="w-full max-w-md rounded-lg border border-line object-cover shadow-small"
+      loading="eager"
+      fetchpriority="high"
+    />
+    <h1 class="mt-6 text-2xl font-bold">oops, nowhere to be found :3</h1>
+    <p class="mt-2 text-ui text-muted">this page doesn't exist. let's get you back home</p>
+    <a
+      href="/"
+      class="mt-6 inline-flex min-h-11 items-center gap-1.5 text-meta font-medium text-accent transition-colors hover:text-accent-strong"
+    >
+      <Icon name="arrow-left" class="h-4 w-4" />
+      back home
+    </a>
+    <p id="countdown" role="timer" class="mt-3 text-caption text-faint">returning home in 5s</p>
+  </main>
+  <Footer />
 </Base>
+
+<script>
+  import { initThemeToggle } from '../lib/icons';
+  initThemeToggle();
+
+  const countdown = document.getElementById('countdown');
+  let remaining = 5;
+  let timer: number;
+
+  const stop = () => {
+    window.clearTimeout(timer);
+    if (countdown) countdown.textContent = 'auto-return cancelled';
+  };
+
+  const tick = () => {
+    if (remaining <= 0) {
+      location.assign('/');
+      return;
+    }
+    if (countdown) countdown.textContent = `returning home in ${remaining}s`;
+    remaining -= 1;
+    timer = window.setTimeout(tick, 1000);
+  };
+  tick();
+
+  document.addEventListener('pointerdown', stop, { once: true });
+  document.addEventListener('keydown', stop, { once: true });
+</script>

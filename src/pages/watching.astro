@@ -1,56 +1,43 @@
 ---
 import Base from '../layouts/Base.astro';
+import ThemeToggle from '../components/ThemeToggle.astro';
+import Panel from '../components/Panel.astro';
 import Footer from '../components/Footer.astro';
+import Icon from '../components/Icon.astro';
+import StatusFilter from '../components/StatusFilter.astro';
 
 const statuses = [
-  { value: '', label: 'All' },
-  { value: 'In progress', label: 'In progress' },
-  { value: 'Completed', label: 'Completed' },
-  { value: 'Planning', label: 'Planning' },
-  { value: 'Paused', label: 'Paused' },
-  { value: 'Dropped', label: 'Dropped' },
+  { value: '', label: 'all' },
+  { value: 'In progress', label: 'in progress' },
+  { value: 'Completed', label: 'completed' },
+  { value: 'Planning', label: 'planning' },
+  { value: 'Paused', label: 'paused' },
+  { value: 'Dropped', label: 'dropped' },
 ];
 ---
 
 <Base title="Watchlist · Emily">
-  <div class="flex min-h-screen flex-col">
-    <div class="mx-auto flex w-full max-w-3xl justify-end px-6 pt-8">
-      <button id="theme-toggle" class="icon-button" type="button" aria-label="Toggle theme" title="Toggle theme"></button>
+  <main class="mx-auto w-full max-w-wide flex-1 px-4 py-3 pb-5">
+    <h1 class="sr-only">watching</h1>
+    <div class="mb-2 flex items-center justify-between gap-3">
+      <a
+        href="/"
+        class="inline-flex min-h-11 items-center gap-1.5 text-meta font-medium text-accent transition-colors hover:text-accent-strong"
+      >
+        <Icon name="arrow-left" class="h-4 w-4" />
+        home
+      </a>
+      <ThemeToggle />
     </div>
-
-    <main class="mx-auto w-full max-w-3xl flex-1 px-6 py-10 sm:py-14">
-      <a href="/" class="inline-flex text-base text-accent hover:text-accent-strong">← back</a>
-
-      <div class="mt-8 flex items-end justify-between border-b border-line pb-4">
-        <div>
-          <h1 class="text-4xl font-bold text-foreground">watching</h1>
-          <div class="mt-1 flex flex-wrap gap-3 text-xs text-muted">
-            <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-[var(--status-current)]"></span> watching</span>
-            <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-accent"></span> completed</span>
-            <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-[var(--status-planning)]"></span> planned</span>
-            <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-[var(--status-paused)]"></span> paused</span>
-            <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-[var(--status-dropped)]"></span> dropped</span>
-          </div>
-        </div>
-        <span id="list-status" class="text-sm text-muted" aria-live="polite">loading…</span>
+    <Panel title="watching" icon="tv">
+      <div class="flex items-center gap-3 pb-2">
+        <StatusFilter statuses={statuses} />
+        <span id="list-status" class="ms-auto text-caption text-faint tabular-nums" aria-live="polite">loading…</span>
       </div>
-
-      <nav class="mt-6 flex flex-wrap gap-5" aria-label="Status filter">
-        {statuses.map((s) => (
-          <button
-            data-status={s.value}
-            class:list={['status-tab', 'text-sm', 'font-medium', s.value === '' ? 'status-tab-active' : 'status-tab-inactive']}
-          >
-            {s.label}
-          </button>
-        ))}
-      </nav>
-
-      <div id="list-grid" class="mt-6 grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-4"></div>
-    </main>
-
-    <Footer />
-  </div>
+      <div id="list-grid" class="grid grid-cols-2 items-start gap-x-3 gap-y-3 pb-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"></div>
+    </Panel>
+  </main>
+  <Footer />
 </Base>
 
 <script>
@@ -60,7 +47,6 @@ const statuses = [
   import { fetchAniList } from '../lib/anilist';
 
   initThemeToggle();
-
   mountListPage({
     load: async () => {
       const anilist = await fetchAniList();

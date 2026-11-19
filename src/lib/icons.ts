@@ -6,13 +6,17 @@ export const COPY_SVG = `<svg class="h-5 w-5" viewBox="0 0 16 16" fill="currentC
 
 export const CHECK_SVG = `<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>`;
 
+export const RELOAD_SVG = `<svg class="h-4 w-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/></svg>`;
+
 export function initThemeToggle() {
   const toggle = document.getElementById('theme-toggle');
   if (!toggle) return;
 
+  const meta = document.querySelector('meta[name="theme-color"]');
   const updateIcon = () => {
     const isDark = document.documentElement.dataset.theme === 'dark';
     toggle.innerHTML = isDark ? SUN_SVG : MOON_SVG;
+    meta?.setAttribute('content', isDark ? '#19171f' : '#f7f4f8');
   };
 
   toggle.addEventListener('click', () => {

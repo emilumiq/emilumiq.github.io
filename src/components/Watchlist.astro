@@ -11,11 +11,11 @@ const skeleton = { base: 'aspect-[2/3] bg-surface', title: 'mt-2 h-3.5 w-3/4 bg-
     <a href="/watching" class="text-base text-accent hover:text-accent-strong transition-colors">see all</a>
   </div>
   <p class="mt-1 text-base text-muted">{watchlist.note}</p>
-  <div class="mt-1 flex flex-wrap gap-3 text-xs text-muted/70">
-    <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"></span> watching</span>
+  <div class="mt-1 flex flex-wrap gap-3 text-xs text-muted">
+    <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-[var(--status-current)]"></span> watching</span>
     <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-accent"></span> completed</span>
-    <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-indigo-400"></span> planned</span>
-    <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-rose-400"></span> dropped</span>
+    <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-[var(--status-planning)]"></span> planned</span>
+    <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-[var(--status-dropped)]"></span> dropped</span>
   </div>
 
   <div class="mt-5 relative">
@@ -39,11 +39,11 @@ const skeleton = { base: 'aspect-[2/3] bg-surface', title: 'mt-2 h-3.5 w-3/4 bg-
     <a href="/reading" class="text-base text-accent hover:text-accent-strong transition-colors">see all</a>
   </div>
   <p class="mt-1 text-base text-muted">{reading.note}</p>
-  <div class="mt-1 flex flex-wrap gap-3 text-xs text-muted/70">
-    <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"></span> reading</span>
+  <div class="mt-1 flex flex-wrap gap-3 text-xs text-muted">
+    <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-[var(--status-current)]"></span> reading</span>
     <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-accent"></span> completed</span>
-    <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-indigo-400"></span> planned</span>
-    <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-rose-400"></span> dropped</span>
+    <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-[var(--status-planning)]"></span> planned</span>
+    <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-[var(--status-dropped)]"></span> dropped</span>
   </div>
 
   <div class="mt-5 relative">
@@ -63,12 +63,10 @@ const skeleton = { base: 'aspect-[2/3] bg-surface', title: 'mt-2 h-3.5 w-3/4 bg-
 
 <script>
   import { createCard, showFallback, sortWatchlist, type Entry } from '../lib/cards';
-  import { fetchAll } from '../lib/yamtrack';
-  import { fetchAniList, mergeUnique } from '../lib/anilist';
+  import { fetchAniList } from '../lib/anilist';
   import { watchlist, reading } from '../data/profile';
 
   const SCROLL_AMOUNT = 220;
-
   function setupScroller(gridId: string, leftId: string, rightId: string) {
     const grid = document.getElementById(gridId)!;
     const leftBtn = document.getElementById(leftId)!;
@@ -113,30 +111,33 @@ const skeleton = { base: 'aspect-[2/3] bg-surface', title: 'mt-2 h-3.5 w-3/4 bg-
       updateArrows();
     };
 
-    return { render };
+    return {
+      render,
+      fail: (message: string, onRetry: () => void) => showFallback(grid, message, onRetry),
+    };
   }
 
   const watching = setupScroller('watchlist-grid', 'scroll-left', 'scroll-right');
   const readingScroller = setupScroller('reading-grid', 'reading-scroll-left', 'reading-scroll-right');
 
-  void Promise.all([fetchAniList().catch(() => null), fetchAll().catch(() => null)]).then(
-    ([anilist, tracker]) => {
-      if (!anilist && !tracker) {
-        watching.render([], watchlist.limit, 'could not load the watchlist');
-        readingScroller.render([], reading.limit, 'could not load the reading list');
-        return;
-      }
-
-      watching.render(
-        sortWatchlist(mergeUnique(anilist?.anime ?? [], tracker ?? [])),
-        watchlist.limit,
-        'nothing here right now',
-      );
-      readingScroller.render(
-        sortWatchlist(anilist?.manga ?? []),
-        reading.limit,
-        'nothing here right now',
-      );
-    },
-  );
+  const loadLists = () => {
+    void fetchAniList()
+      .then((anilist) => {
+        watching.render(
+          sortWatchlist(anilist.anime),
+          watchlist.limit,
+          'nothing here right now',
+        );
+        readingScroller.render(
+          sortWatchlist(anilist.manga),
+          reading.limit,
+          'nothing here right now',
+        );
+      })
+      .catch(() => {
+        watching.fail('could not load the watchlist', loadLists);
+        readingScroller.fail('could not load the reading list', loadLists);
+      });
+  };
+  loadLists();
 </script>

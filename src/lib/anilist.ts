@@ -55,25 +55,6 @@ function toEntry(raw: AniListRawEntry): Entry {
   };
 }
 
-export function normalizeTitle(title: string): string {
-  return title
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[^\p{L}\p{N}]+/gu, '');
-}
-
-export function mergeUnique(primary: Entry[], extra: Entry[]): Entry[] {
-  const seen = new Set(primary.map((e) => normalizeTitle(e.title)));
-  const out = [...primary];
-  for (const entry of extra) {
-    const key = normalizeTitle(entry.title);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(entry);
-  }
-  return out;
-}
-
 let inflight: Promise<AniListBundle> | null = null;
 
 export function fetchAniList(): Promise<AniListBundle> {
@@ -106,7 +87,6 @@ export function fetchAniList(): Promise<AniListBundle> {
   return request;
 }
 
-/** Keep only the entries whose status matches, preserving order. */
 export function filterByStatus(entries: Entry[], status: string): Entry[] {
   return status ? entries.filter((e) => e.status === status) : entries;
 }

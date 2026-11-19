@@ -24,12 +24,12 @@ const statuses = [
       <div class="mt-8 flex items-end justify-between border-b border-line pb-4">
         <div>
           <h1 class="text-4xl font-bold text-foreground">watching</h1>
-          <div class="mt-1 flex flex-wrap gap-3 text-xs text-muted/70">
-            <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"></span> watching</span>
+          <div class="mt-1 flex flex-wrap gap-3 text-xs text-muted">
+            <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-[var(--status-current)]"></span> watching</span>
             <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-accent"></span> completed</span>
-            <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-indigo-400"></span> planned</span>
-            <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-amber-500"></span> paused</span>
-            <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-rose-400"></span> dropped</span>
+            <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-[var(--status-planning)]"></span> planned</span>
+            <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-[var(--status-paused)]"></span> paused</span>
+            <span class="inline-flex items-center gap-1"><span class="inline-block h-1.5 w-1.5 rounded-full bg-[var(--status-dropped)]"></span> dropped</span>
           </div>
         </div>
         <span id="list-status" class="text-sm text-muted" aria-live="polite">loading…</span>
@@ -56,20 +56,15 @@ const statuses = [
 <script>
   import { initThemeToggle } from '../lib/icons';
   import { mountListPage } from '../lib/listPage';
-  import { sortWatchlist, type Entry } from '../lib/cards';
-  import { fetchAll } from '../lib/yamtrack';
-  import { fetchAniList, mergeUnique } from '../lib/anilist';
+  import { sortWatchlist } from '../lib/cards';
+  import { fetchAniList } from '../lib/anilist';
 
   initThemeToggle();
 
   mountListPage({
     load: async () => {
-      const [anilist, tracker] = await Promise.all([
-        fetchAniList().catch(() => null),
-        fetchAll().catch(() => [] as Entry[]),
-      ]);
-
-      return sortWatchlist(mergeUnique(anilist?.anime ?? [], tracker));
+      const anilist = await fetchAniList();
+      return sortWatchlist(anilist.anime);
     },
     errorMessage: 'could not load the watchlist',
   });

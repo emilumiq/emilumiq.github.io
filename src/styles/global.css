@@ -33,8 +33,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── Dark theme ── */
-
 :root[data-theme='dark'] {
   --color-bg: #19171f;
   --color-surface: #211e29;
@@ -50,23 +48,54 @@ body {
   color: #eee8f0;
 }
 
-/* ── Theme toggle button ── */
+a[href],
+button:not(:disabled),
+summary,
+[role='button'],
+label[for] {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 
 .icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
   background: none;
   border: none;
   color: var(--color-muted);
   font-size: 1.2rem;
   padding: 0.25rem;
-  cursor: pointer;
   transition: color 0.15s;
 }
 
 .icon-button:hover {
   color: var(--color-foreground);
 }
-
-/* ── Accent button ── */
 
 .btn-accent {
   border: 1px solid var(--color-accent);
@@ -78,15 +107,13 @@ body {
   background: color-mix(in srgb, var(--color-accent) 14%, transparent);
 }
 
-/* ── Status tabs ── */
-
 .status-tab {
   position: relative;
   border: none;
   background: none;
-  padding: 0.35rem 0 0.7rem;
+  min-height: 44px;
+  padding: 0.5rem 0.9rem 0.75rem;
   color: var(--color-muted);
-  cursor: pointer;
   transition: color 0.15s;
 }
 
@@ -117,35 +144,35 @@ body {
   display: none;
 }
 
-/* ── Accent filter for SVG icons ── */
-
 .tech-icon,
 .logo-icon {
   filter: var(--accent-filter);
 }
 
 :root {
+  --status-current: #059669;
+  --status-planning: #6366f1;
+  --status-paused: #b45309;
+  --status-dropped: #f43f5e;
   --accent-filter: invert(29%) sepia(20%) saturate(1800%) hue-rotate(278deg) brightness(85%);
 }
 
 :root[data-theme='dark'] {
+  --status-current: #10b981;
+  --status-planning: #818cf8;
+  --status-paused: #f59e0b;
+  --status-dropped: #fb7185;
   --accent-filter: invert(77%) sepia(20%) saturate(700%) hue-rotate(280deg) brightness(105%);
 }
-
-/* ── Selection ── */
 
 ::selection {
   background: color-mix(in oklab, var(--color-accent) 35%, transparent);
   color: #fff;
 }
 
-/* ── Links ── */
-
 a {
   transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
 }
-
-/* ── Watchlist scroller ── */
 
 .watchlist-scroller {
   scroll-behavior: auto;
@@ -156,8 +183,6 @@ a {
   display: none;
 }
 
-/* ── Scroll arrows ── */
-
 .scroll-arrow-btn {
   font-size: 2.5rem;
   font-weight: 300;
@@ -165,10 +190,10 @@ a {
   background: none;
   border: none;
   padding: 0 0.5rem;
-  cursor: pointer;
+  min-width: 44px;
+  min-height: 44px;
   transition: opacity 0.15s;
   flex-shrink: 0;
-  min-width: 2.5rem;
   text-align: center;
 }
 
@@ -181,22 +206,19 @@ a {
   pointer-events: none;
 }
 
-/* ── Spoiler ── */
-
 .spoiler {
   color: var(--color-accent-soft);
   filter: blur(5px);
-  cursor: pointer;
   user-select: none;
   transition: filter 0.2s ease;
+  padding: 0.7rem 0.4rem;
+  margin: -0.7rem -0.4rem;
 }
 
 .spoiler.revealed {
   filter: none;
   user-select: text;
 }
-
-/* ── Badge grab section ── */
 
 .copy-badge:focus {
   border-color: var(--color-accent);

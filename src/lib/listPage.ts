@@ -66,11 +66,15 @@ export function mountListPage({
 
   setTabStyles();
 
-  load()
-    .then(apply)
-    .catch(() => {
-      all = [];
-      showFallback(grid, errorMessage);
-      statusEl.textContent = '';
-    });
+  const attempt = () => {
+    statusEl.textContent = 'loading…';
+    load()
+      .then(apply)
+      .catch(() => {
+        all = [];
+        statusEl.textContent = '';
+        showFallback(grid, errorMessage, attempt);
+      });
+  };
+  attempt();
 }

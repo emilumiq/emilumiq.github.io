@@ -20,7 +20,7 @@ import Icon from '../components/Icon.astro';
 
       <section class="border-t border-line pt-8">
         <details class="group">
-          <summary class="flex cursor-pointer items-center gap-3 select-none list-none">
+          <summary class="flex min-h-[44px] cursor-pointer items-center gap-3 select-none list-none">
             <img
               src="/emilumiq-88x31.gif"
               alt="emilumiq"
@@ -36,16 +36,17 @@ import Icon from '../components/Icon.astro';
               type="text"
               readonly
               value='<a href="https://emilumiq.github.io"><img src="https://emilumiq.github.io/emilumiq-88x31.gif" alt="emilumiq" width="88" height="31"></a>'
-              class="copy-badge flex-1 rounded-md border border-line bg-surface px-3 py-2 font-mono text-xs text-muted select-all focus:outline-none focus:border-accent"
+              class="copy-badge flex-1 rounded-md border border-muted bg-surface px-3 py-2 font-mono text-xs text-muted select-all focus:outline-none focus:border-accent"
             />
             <button
               type="button"
-              class="copy-badge-btn shrink-0 p-0 text-muted transition-colors hover:text-accent"
+              class="copy-badge-btn shrink-0 p-3 text-muted transition-colors hover:text-accent"
               data-code='<a href="https://emilumiq.github.io"><img src="https://emilumiq.github.io/emilumiq-88x31.gif" alt="emilumiq" width="88" height="31"></a>'
               aria-label="Copy badge code"
             >
               <Icon name="copy" class="h-5 w-5" fill />
             </button>
+            <span id="copy-status" class="sr-only" role="status"></span>
           </div>
         </details>
       </section>
@@ -66,7 +67,12 @@ import Icon from '../components/Icon.astro';
       if (!code) return;
       navigator.clipboard.writeText(code).then(() => {
         btn.innerHTML = CHECK_SVG;
-        setTimeout(() => (btn.innerHTML = COPY_SVG), 1500);
+        const status = document.getElementById('copy-status');
+        if (status) status.textContent = 'badge code copied';
+        setTimeout(() => {
+          btn.innerHTML = COPY_SVG;
+          if (status) status.textContent = '';
+        }, 1500);
       });
     });
   }

@@ -1,3 +1,5 @@
+import { RELOAD_SVG } from './icons';
+
 export type Entry = {
   title: string;
   image: string | null;
@@ -20,11 +22,11 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  'In progress': 'bg-emerald-500',
+  'In progress': 'bg-[var(--status-current)]',
   Completed: 'bg-accent',
-  Planning: 'bg-indigo-400',
-  Paused: 'bg-amber-500',
-  Dropped: 'bg-rose-400',
+  Planning: 'bg-[var(--status-planning)]',
+  Paused: 'bg-[var(--status-paused)]',
+  Dropped: 'bg-[var(--status-dropped)]',
 };
 
 const PROGRESS_UNITS: Record<string, string> = {
@@ -109,7 +111,10 @@ export function createCard(
     const dot = document.createElement('span');
     dot.className = `inline-block h-1.5 w-1.5 rounded-full align-middle mr-1 ${statusColor}`;
     dot.title = entry.status!;
-    subLeft.append(dot);
+    const srStatus = document.createElement('span');
+    srStatus.className = 'sr-only';
+    srStatus.textContent = `${entry.status}: `;
+    subLeft.append(dot, srStatus);
   }
 
   subLeft.append(document.createTextNode(TYPE_LABELS[entry.media_type] ?? entry.media_type));
@@ -120,7 +125,7 @@ export function createCard(
 
   if (dateStr) {
     const date = document.createElement('span');
-    date.className = 'text-xs text-muted/60';
+    date.className = 'text-xs text-muted';
     date.textContent = dateStr;
     sub.append(date);
   }
@@ -130,15 +135,22 @@ export function createCard(
   return a;
 }
 
-/** Show a fallback message inside a container. */
-export function showFallback(container: HTMLElement, message: string) {
+export function showFallback(container: HTMLElement, message: string, onRetry?: () => void) {
   container.replaceChildren();
   const box = document.createElement('div');
-  box.className = 'px-5 py-8 text-center';
+  box.className = 'col-span-full w-full px-5 py-8 text-center';
   const p = document.createElement('p');
   p.className = 'text-sm text-muted';
   p.textContent = message;
   box.append(p);
+  if (onRetry) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'mt-3 inline-flex min-h-[44px] items-center gap-1.5 px-3 text-sm font-medium text-accent hover:text-accent-strong';
+    btn.innerHTML = `${RELOAD_SVG}<span>retry</span>`;
+    btn.addEventListener('click', onRetry);
+    box.append(btn);
+  }
   container.append(box);
 }
 
